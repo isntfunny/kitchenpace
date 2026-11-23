@@ -108,6 +108,7 @@ const RECIPES_MAPPINGS = {
         categorySlugs: { type: 'keyword' },
         tags: { type: 'keyword' },
         ingredients: { type: 'keyword' },
+        mainIngredients: { type: 'keyword' },
         difficulty: { type: 'keyword' },
         status: { type: 'keyword' },
         totalTime: { type: 'integer' },

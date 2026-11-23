@@ -26,12 +26,47 @@ export function semanticPrependAllowed(input: {
     userId?: string;
     page: number;
     context?: RecipeSearchContext;
+    /** Week plan filter or leftover sort: semantic hits would ignore them */
+    personal?: boolean;
 }): boolean {
     const words = input.query?.trim() ? input.query.trim().split(/\s+/).length : 0;
-    return !input.context && !!input.userId && input.page === 1 && words >= SEMANTIC_MIN_WORD_COUNT;
+    return (
+        !input.context &&
+        !input.personal &&
+        !!input.userId &&
+        input.page === 1 &&
+        words >= SEMANTIC_MIN_WORD_COUNT
+    );
 }
 
 type Clause = Record<string, unknown>;
+
+/** What the server read from the user's week plan for the `weekPlan` filter (KUC-131). */
+export type WeekPlanSearchData = {
+    /** Main ingredients of the planned recipes (index names) */
+    mainIngredients: string[];
+    /** Recipes already planned in that week */
+    recipeIds: string[];
+};
+
+/**
+ * Clauses of the week plan quick filter. `with`: uses a main ingredient of the week and is
+ * not planned yet; `without`: none of its main ingredients is in the week. Without data
+ * (empty plan) the filter does nothing.
+ */
+export function weekPlanClauses(
+    mode: RecipeFilterSearchParams['weekPlan'],
+    week: WeekPlanSearchData | undefined,
+): { filter: Clause[]; mustNot: Clause[] } {
+    if (!mode || !week || week.mainIngredients.length === 0) return { filter: [], mustNot: [] };
+    if (mode === 'with') {
+        return {
+            filter: [{ terms: { ingredients: week.mainIngredients } }],
+            mustNot: week.recipeIds.length ? [{ terms: { id: week.recipeIds } }] : [],
+        };
+    }
+    return { filter: [], mustNot: [{ terms: { mainIngredients: week.mainIngredients } }] };
+}
 
 /**
  * OpenSearch bool query of the visible filters plus the base filter. The base filter always
@@ -40,6 +75,7 @@ type Clause = Record<string, unknown>;
 export function buildRecipeBoolQuery(
     filters: RecipeFilterSearchParams,
     context?: RecipeSearchContext,
+    week?: WeekPlanSearchData,
 ): Clause {
     const {
         query,
@@ -100,6 +136,11 @@ export function buildRecipeBoolQuery(
         bool.must_not.push({ terms: { ingredients: excludeIngredients } });
     }
     if (context?.excludeIds?.length) bool.must_not.push({ terms: { id: context.excludeIds } });
+
+    // A quick filter, not a sidebar filter: always applied, also in OR mode
+    const weekPlan = weekPlanClauses(filters.weekPlan, week);
+    bool.filter.push(...weekPlan.filter);
+    bool.must_not.push(...weekPlan.mustNot);
 
     if (clauses.length > 0) {
         if (filterMode === 'or') {

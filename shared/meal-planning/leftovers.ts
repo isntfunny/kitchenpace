@@ -9,11 +9,14 @@
  */
 import { addDays, diffDays, weekdayLong } from '../dates';
 import { clamp01 } from '../math';
-import { requiredIngredients, type RankingRecipe } from '../recipe-ranking/features';
+import type { RankingRecipe } from '../recipe-ranking/features';
 import { dot } from '../recipe-ranking/vector';
 
+import { formatAmount, neededAmount, scoreLeftoverUse } from './leftover-score';
 import { DEFAULT_DURATION, durationFit, tasteOf, type DurationConfig } from './scoring';
 import type { BaseUnit, IsoDate } from './types';
+
+export { neededAmount };
 
 export interface Leftover {
     /** Id of this leftover (e.g. pantry entry), used to remember rejections */
@@ -62,13 +65,6 @@ export interface LeftoverHint {
     recipes: LeftoverRecipeSuggestion[];
 }
 
-const UNIT_LABEL: Record<BaseUnit, string> = { g: 'g', ml: 'ml', Stk: 'Stk.' };
-
-function formatAmount(amount: number, unit: BaseUnit): string {
-    const rounded = Math.round(amount * 10) / 10;
-    return `${String(rounded).replace('.', ',')} ${UNIT_LABEL[unit]}`;
-}
-
 /** Taste 0..1 from the cosine of profile and recipe embedding; unknown = undefined. */
 export function tasteScoreOf(
     profile: readonly number[] | null,
@@ -78,18 +74,6 @@ export function tasteScoreOf(
     // Both are unit length, so the dot product is the cosine; other lengths do not compare
     const cosine = profile.length === embedding.length ? dot(profile, embedding) : 0;
     return Number.isFinite(cosine) ? clamp01((cosine + 1) / 2) : undefined;
-}
-
-/** Amount of an ingredient the household needs for one meal of `recipe`; unknown = null. */
-export function neededAmount(
-    recipe: RankingRecipe,
-    ingredientId: string,
-    household: number,
-): { amount: number; unit: BaseUnit } | null {
-    const needed = requiredIngredients(recipe).find((i) => i.id === ingredientId);
-    if (!needed || needed.amount === undefined || !needed.unit) return null;
-    const factor = recipe.servings && recipe.servings > 0 ? household / recipe.servings : 1;
-    return { amount: Math.round(needed.amount * factor * 1000) / 1000, unit: needed.unit };
 }
 
 export function isReliableLeftover(
@@ -119,10 +103,20 @@ export function suggestLeftoverRecipes(input: LeftoverInput): LeftoverHint[] {
         const suggestedDate = diffDays(today, dayBefore) < 0 ? today : dayBefore;
         const name = leftover.name ?? 'Zutat';
 
-        const recipes: LeftoverRecipeSuggestion[] = [];
+        const stock = [
+            {
+                ingredientId: leftover.ingredientId,
+                name,
+                amountBase: leftover.amountBase,
+                unitBase: leftover.unitBase,
+                expiresOn: leftover.expiresOn,
+            },
+        ];
+        const recipes: (LeftoverRecipeSuggestion & { tieBreak: number })[] = [];
         for (const recipe of input.recipes) {
             const needed = neededAmount(recipe, leftover.ingredientId, input.household);
-            // Unknown or differently measured amounts are unreliable: no suggestion
+            // A hint promises the leftover is enough: unknown, differently measured or larger
+            // amounts are no suggestion
             if (
                 !needed ||
                 needed.amount <= 0 ||
@@ -132,10 +126,15 @@ export function suggestLeftoverRecipes(input: LeftoverInput): LeftoverHint[] {
                 continue;
             }
 
+            // Same order as the search sort "Verbraucht meine Reste" (KUC-132); taste and
+            // duration only break ties
             const usage = clamp01(needed.amount / leftover.amountBase);
+            const { score } = scoreLeftoverUse(recipe, stock, {
+                household: input.household,
+                today,
+            });
             const taste = tasteOf(tasteScoreOf(input.profile, recipe.embedding));
             const time = durationFit(recipe.totalTime, suggestedDate, duration);
-            const score = 3 * usage + 2 * taste + 1 * time;
 
             const reasons: { text: string; weight: number }[] = [
                 {
@@ -155,13 +154,19 @@ export function suggestLeftoverRecipes(input: LeftoverInput): LeftoverHint[] {
 
             recipes.push({
                 recipeId: recipe.id,
-                score: Math.round(score * 1000) / 1000,
+                score,
+                tieBreak: 2 * taste + time,
                 reasons: reasons.slice(0, 2).map((reason) => reason.text),
             });
         }
 
         if (recipes.length === 0) continue;
-        recipes.sort((a, b) => b.score - a.score || a.recipeId.localeCompare(b.recipeId));
+        recipes.sort(
+            (a, b) =>
+                b.score - a.score ||
+                b.tieBreak - a.tieBreak ||
+                a.recipeId.localeCompare(b.recipeId),
+        );
 
         hints.push({
             leftoverId: leftover.id,
@@ -173,7 +178,9 @@ export function suggestLeftoverRecipes(input: LeftoverInput): LeftoverHint[] {
                     ? 'die heute ablaufen'
                     : `die ${weekdayLong(leftover.expiresOn)} ablaufen`
             }. Wie wäre es mit einem dieser Gerichte?`,
-            recipes: recipes.slice(0, maxRecipes),
+            recipes: recipes
+                .slice(0, maxRecipes)
+                .map(({ recipeId, score, reasons }) => ({ recipeId, score, reasons })),
         });
     }
 

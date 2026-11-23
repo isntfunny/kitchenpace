@@ -11,14 +11,20 @@ import { ActiveFilters } from './ActiveFilters';
 
 export type SortChoice = { value: RecipeSortOption; label: string };
 
-/** Sorts of the recipe page; "Passt zu dir" only for logged-in users. */
-export function searchSortOptions(isLoggedIn: boolean): SortChoice[] {
+/**
+ * Sorts of the recipe page; "Passt zu dir" only for logged-in users, "Verbraucht meine
+ * Reste" (KUC-132) only for logged-in users with a pantry.
+ */
+export function searchSortOptions(isLoggedIn: boolean, hasPantry = false): SortChoice[] {
     return [
         { value: 'rating', label: 'Beste Bewertung' },
         { value: 'newest', label: 'Neueste' },
         { value: 'fastest', label: 'Schnellste' },
         { value: 'popular', label: 'Beliebteste' },
         ...(isLoggedIn ? [{ value: 'taste' as const, label: 'Passt zu dir ✨' }] : []),
+        ...(isLoggedIn && hasPantry
+            ? [{ value: 'leftovers' as const, label: 'Verbraucht meine Reste' }]
+            : []),
     ];
 }
 

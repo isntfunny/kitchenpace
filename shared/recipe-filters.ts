@@ -28,8 +28,36 @@ const DEFAULT_PAGE = 1;
 const DEFAULT_FILTER_MODE: RecipeFilterSearchParams['filterMode'] = 'and';
 const DEFAULT_SORT: RecipeSortOption = 'rating';
 
-/** `week`: "Passt zu deiner Woche" in the week selection dialog (KUC-126) */
-export type RecipeSortOption = 'rating' | 'newest' | 'fastest' | 'popular' | 'taste' | 'week';
+/**
+ * `week`: "Passt zu deiner Woche" in the week selection dialog (KUC-126);
+ * `leftovers`: "Verbraucht meine Reste", by the pantry of the user (KUC-132)
+ */
+export type RecipeSortOption =
+    | 'rating'
+    | 'newest'
+    | 'fastest'
+    | 'popular'
+    | 'taste'
+    | 'week'
+    | 'leftovers';
+
+export const RECIPE_SORT_OPTIONS: readonly RecipeSortOption[] = [
+    'rating',
+    'newest',
+    'fastest',
+    'popular',
+    'taste',
+    'week',
+    'leftovers',
+];
+
+/**
+ * Quick filter by the user's week plan (KUC-131): `with` = recipes that reuse the main
+ * ingredients of the planned week, `without` = recipes whose main ingredients are not
+ * already in it. The server reads the plan; the URL only carries the choice.
+ */
+export type WeekPlanFilter = 'with' | 'without';
+const WEEK_PLAN_FILTERS: readonly WeekPlanFilter[] = ['with', 'without'];
 
 export type RecipeFilterParams = {
     query?: string;
@@ -50,6 +78,7 @@ export type RecipeFilterParams = {
     maxStepCount?: number;
     minCalories?: number;
     maxCalories?: number;
+    weekPlan?: WeekPlanFilter;
 };
 
 export type RecipeFilterSearchParams = RecipeFilterParams & {
@@ -97,15 +126,8 @@ export function parseRecipeFilterParams(params: URLSearchParams): RecipeFilterSe
     const limitValue = toNumber(params.get('limit'));
     const modeParam = params.get('mode');
     const sortParam = params.get('sort');
-    const validSorts: RecipeSortOption[] = [
-        'rating',
-        'newest',
-        'fastest',
-        'popular',
-        'taste',
-        'week',
-    ];
-    const sort = validSorts.includes(sortParam as RecipeSortOption)
+    const weekPlanParam = params.get('weekPlan');
+    const sort = RECIPE_SORT_OPTIONS.includes(sortParam as RecipeSortOption)
         ? (sortParam as RecipeSortOption)
         : DEFAULT_SORT;
 
@@ -128,6 +150,9 @@ export function parseRecipeFilterParams(params: URLSearchParams): RecipeFilterSe
         maxStepCount: numbers.maxStepCount,
         minCalories: numbers.minCalories,
         maxCalories: numbers.maxCalories,
+        weekPlan: WEEK_PLAN_FILTERS.includes(weekPlanParam as WeekPlanFilter)
+            ? (weekPlanParam as WeekPlanFilter)
+            : undefined,
         page: Number.isFinite(pageValue ?? NaN)
             ? Math.max(DEFAULT_PAGE, pageValue ?? DEFAULT_PAGE)
             : DEFAULT_PAGE,
@@ -184,6 +209,7 @@ export function buildRecipeFilterQuery(filters: RecipeFilterSearchParams): URLSe
     setNumber('maxStepCount', filters.maxStepCount);
     setNumber('minCalories', filters.minCalories);
     setNumber('maxCalories', filters.maxCalories);
+    if (filters.weekPlan) params.set('weekPlan', filters.weekPlan);
 
     if (filters.filterMode && filters.filterMode !== DEFAULT_FILTER_MODE) {
         params.set('mode', filters.filterMode);

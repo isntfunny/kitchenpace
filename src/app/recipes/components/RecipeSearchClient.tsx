@@ -5,6 +5,7 @@ import type { FC } from 'react';
 
 import type { FilterSetWithRelations } from '@app/lib/fits-now/db-queries';
 import type { Season } from '@app/lib/fits-now/labels';
+import type { PersonalSearchFlags } from '@app/lib/recipeSearchTypes';
 import { STORAGE_KEYS } from '@app/lib/storageKeys';
 import type { RecipeFilterSearchParams } from '@shared/recipe-filters';
 import type { ThemeChip } from '@shared/theme-clusters/release';
@@ -23,6 +24,8 @@ type RecipeSearchClientProps = {
     currentSeason?: Season;
     themes?: ThemeChip[];
     isLoggedIn?: boolean;
+    /** Personal quick filters and sorts (week plan, pantry), read on the server */
+    personal?: PersonalSearchFlags;
     /** The URL sets ?sort=, so the remembered sort must not override it */
     sortLocked?: boolean;
 };
@@ -36,6 +39,7 @@ export const RecipeSearchClient: FC<RecipeSearchClientProps> = ({
     currentSeason,
     themes,
     isLoggedIn = false,
+    personal,
     sortLocked = false,
 }) => {
     const state = useRecipeFilterState({
@@ -44,6 +48,7 @@ export const RecipeSearchClient: FC<RecipeSearchClientProps> = ({
         isLoggedIn,
         sortStorageKey: STORAGE_KEYS.searchSort,
         sortLocked,
+        hasPantry: personal?.hasPantry ?? false,
     });
     useFilterUrlSync(state, { pathname: usePathname(), initialFilters });
     const results = useRecipeSearch(state.filters, { initialData });
@@ -57,6 +62,7 @@ export const RecipeSearchClient: FC<RecipeSearchClientProps> = ({
             themes={themes}
             currentSeason={currentSeason}
             isLoggedIn={isLoggedIn}
+            personal={personal}
         />
     );
 };

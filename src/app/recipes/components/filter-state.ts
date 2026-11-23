@@ -41,6 +41,7 @@ export function clearedFilters(prev: FiltersWithSort): FiltersWithSort {
         maxStepCount: undefined,
         minCalories: undefined,
         maxCalories: undefined,
+        weekPlan: undefined,
         filterSetId: undefined,
     };
 }
@@ -106,7 +107,7 @@ export function countActiveFilters(filters: RecipeFilterSearchParams): number {
         (sum, key) => (typeof filters[key] === 'number' ? sum + 1 : sum),
         0,
     );
-    return arrays + numbers + (filters.query?.trim() ? 1 : 0);
+    return arrays + numbers + (filters.query?.trim() ? 1 : 0) + (filters.weekPlan ? 1 : 0);
 }
 
 /** Typing and restoring (back/forward, SSR navigation, first render) replace the entry. */

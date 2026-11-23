@@ -6,6 +6,7 @@ import { QueryProvider } from '@app/components/providers/QueryProvider';
 import { getServerAuthSession } from '@app/lib/auth';
 import { type FilterSetWithRelations } from '@app/lib/fits-now/db-queries';
 import { toFilterCriteria } from '@app/lib/fits-now/mappings';
+import { loadPersonalSearchFlags } from '@app/lib/recipes/personal-search.server';
 import { queryRecipes } from '@app/lib/recipeSearch';
 import { APP_URL } from '@app/lib/url';
 import { getQueryClient } from '@app/trpc/server';
@@ -72,7 +73,10 @@ export default async function RecipesPage({ searchParams }: RecipesPageProps) {
 
     const session = await getServerAuthSession('recipes-page');
 
-    const { filterOptions, filterSets, themes, currentSeason } = await loadSearchStartData();
+    const [{ filterOptions, filterSets, themes, currentSeason }, personal] = await Promise.all([
+        loadSearchStartData(),
+        loadPersonalSearchFlags(session?.user?.id),
+    ]);
 
     // Merge FilterSet criteria into initial filters for correct SSR
     mergeFilterSetIntoFilters(initialFilters, filterSets);
@@ -91,6 +95,7 @@ export default async function RecipesPage({ searchParams }: RecipesPageProps) {
                         currentSeason={currentSeason}
                         themes={themes}
                         isLoggedIn={!!session?.user}
+                        personal={personal}
                         sortLocked={urlParams.has('sort')}
                     />
                 </HydrationBoundary>

@@ -102,3 +102,13 @@ test('rule-based fallback for uncategorised ingredients', () => {
     assert.equal(kind('Knoblauch'), 'other');
     assert.equal(kind('Zuckerschoten'), 'bulk');
 });
+
+test('lemons and limes only add flavour, even in a vegetable category', () => {
+    assert.equal(classifyIngredient({ name: 'Limette', categorySlugs: [VEG[0]] }), 'other');
+    assert.equal(classifyIngredient({ name: 'Zitronen', categorySlugs: [VEG[0]] }), 'other');
+    assert.equal(classifyIngredient({ name: 'Bio-Zitrone', categorySlugs: [] }), 'other');
+    assert.deepEqual(
+        deriveMainIngredients([line('Limette', VEG, 2, 'Stk'), line('Garnelen', ['fisch'], 300)]),
+        ['Garnelen'],
+    );
+});

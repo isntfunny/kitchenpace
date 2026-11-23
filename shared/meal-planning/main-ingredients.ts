@@ -49,9 +49,9 @@ const STARCH_NAME =
     /nudel|spaghetti|penne|tagliatelle|linguine|makkaroni|maccaroni|fusilli|farfalle|rigatoni|orecchiette|pappardelle|lasagne|cannelloni|tortellini|ravioli|spätzle|schupfnudel|gnocchi|pasta|maultasche|(^|\s)reis\b|reis$|risotto|basmati|kartoffel|süßkartoffel|couscous|bulgur|quinoa|hirse|polenta|graupen|knödel|klöße|kloß|tortilla|wrap/;
 const VEG_NAME =
     /tomate|paprika|zucchini|karotte|möhre|mohrrübe|brokkoli|broccoli|spinat|kürbis|gurke|aubergine|lauch|porree|pilz|champignon|kohl|rucola|salat|mangold|fenchel|sellerie|spargel|radieschen|rote bete|pastinake|kohlrabi|erbsen|mais\b|artischocke|rübe|wirsing|chicorée|endivie|bohnen|zuckerschote|feldsalat|blattsalat|eisberg|romana|kopfsalat/;
-/** Basics and seasonings that never define a dish, whatever their category */
+/** Basics and seasonings that never define a dish, whatever their category; citrus only adds flavour */
 const BASIC_NAME =
-    /^(salz|pfeffer|wasser|zucker|knoblauch.*|zwiebel.*|schalotte.*|frühlingszwiebel.*|lauchzwiebel.*|ingwer|chili.*|.*öl|essig.*|.*essig|.*brühe|.*fond|tomatenmark|senf|ketchup|sojasauce|sojasoße|honig|zitronensaft|limettensaft)$/;
+    /^(salz|pfeffer|wasser|zucker|knoblauch.*|zwiebel.*|schalotte.*|frühlingszwiebel.*|lauchzwiebel.*|ingwer|chili.*|.*öl|essig.*|.*essig|.*brühe|.*fond|tomatenmark|senf|ketchup|sojasauce|sojasoße|honig|zitronensaft|limettensaft)$|zitrone|limette/;
 /** Spices, dried herbs, pastes, powders */
 const SPICE_NAME =
     /pulver|gewürz|paprikapulver|currypulver|kreuzkümmel|kümmel|zimt|muskat|nelke|lorbeer|kardamom|kurkuma|oregano|thymian|rosmarin|basilikum|petersilie|schnittlauch|dill|koriander|majoran|salbei|minze|estragon|vanille|paste\b|flocken$/;

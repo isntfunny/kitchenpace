@@ -4,7 +4,7 @@ import { cache } from 'react';
 
 import { KeywordLandingContent } from '@app/components/features/KeywordLandingContent';
 import { PageShell } from '@app/components/layouts/PageShell';
-import { fetchTagLanding } from '@app/lib/keyword-landing';
+import { fetchTagLanding, isIndexableLanding } from '@app/lib/keyword-landing';
 import { APP_URL } from '@app/lib/url';
 import { mergedTagSlugTarget } from '@shared/tags/tag-list';
 
@@ -45,6 +45,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         title,
         description,
         alternates: { canonical: url },
+        // Thin lists stay reachable but out of the index (KUC-142)
+        ...(!isIndexableLanding(data.totalCount) && { robots: { index: false, follow: true } }),
         openGraph: {
             title: brandedTitle,
             description,

@@ -6,7 +6,7 @@ import { KeywordLandingContent } from '@app/components/features/KeywordLandingCo
 import { ShelfLifeHint } from '@app/components/features/ShelfLifeHint';
 import { PageShell } from '@app/components/layouts/PageShell';
 import { AddIngredientToListButton } from '@app/components/shopping/AddIngredientToListButton';
-import { fetchIngredientLanding } from '@app/lib/keyword-landing';
+import { fetchIngredientLanding, isIndexableLanding } from '@app/lib/keyword-landing';
 import { APP_URL } from '@app/lib/url';
 
 export const revalidate = 300;
@@ -37,6 +37,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         title,
         description,
         alternates: { canonical: url },
+        // Thin lists stay reachable but out of the index (KUC-142)
+        ...(!isIndexableLanding(data.totalCount) && { robots: { index: false, follow: true } }),
         openGraph: {
             title: brandedTitle,
             description,

@@ -105,19 +105,44 @@ export async function fetchIngredientLanding(
     };
 }
 
-/** Slugs for the sitemap — only keywords that resolve to at least one published recipe */
-export async function fetchTagSlugsWithRecipes(): Promise<string[]> {
-    const tags = await prisma.tag.findMany({
-        where: { recipes: { some: { recipe: PUBLISHED_RECIPE_FILTER } } },
-        select: { slug: true },
-    });
-    return tags.map((t) => t.slug);
+/**
+ * Landing pages with fewer published recipes are thin lists: they stay reachable
+ * but are noindex and left out of the sitemap, so Google spends its small crawl
+ * budget on recipes instead (KUC-142).
+ */
+export const MIN_INDEXABLE_LANDING_RECIPES = 5;
+
+export function isIndexableLanding(totalCount: number): boolean {
+    return totalCount >= MIN_INDEXABLE_LANDING_RECIPES;
 }
 
-export async function fetchIngredientSlugsWithRecipes(): Promise<string[]> {
-    const ingredients = await prisma.ingredient.findMany({
-        where: { recipes: { some: { recipe: PUBLISHED_RECIPE_FILTER } } },
-        select: { slug: true },
+/** Slugs whose distinct published recipe count reaches the index threshold. */
+function indexableSlugs(rows: { recipeId: string; slug: string }[]): string[] {
+    const recipesBySlug = new Map<string, Set<string>>();
+    for (const { recipeId, slug } of rows) {
+        const ids = recipesBySlug.get(slug) ?? new Set<string>();
+        ids.add(recipeId);
+        recipesBySlug.set(slug, ids);
+    }
+    return [...recipesBySlug]
+        .filter(([, ids]) => isIndexableLanding(ids.size))
+        .map(([slug]) => slug);
+}
+
+/** Slugs for the sitemap — only tags whose landing page is indexable */
+export async function fetchTagSlugsWithRecipes(): Promise<string[]> {
+    const rows = await prisma.recipeTag.findMany({
+        where: { recipe: PUBLISHED_RECIPE_FILTER },
+        select: { recipeId: true, tag: { select: { slug: true } } },
     });
-    return ingredients.map((i) => i.slug);
+    return indexableSlugs(rows.map((r) => ({ recipeId: r.recipeId, slug: r.tag.slug })));
+}
+
+/** Slugs for the sitemap — only ingredients whose landing page is indexable */
+export async function fetchIngredientSlugsWithRecipes(): Promise<string[]> {
+    const rows = await prisma.recipeIngredient.findMany({
+        where: { recipe: PUBLISHED_RECIPE_FILTER },
+        select: { recipeId: true, ingredient: { select: { slug: true } } },
+    });
+    return indexableSlugs(rows.map((r) => ({ recipeId: r.recipeId, slug: r.ingredient.slug })));
 }

@@ -1,4 +1,5 @@
 import type { RecipeDetailData } from '@app/app/actions/recipes';
+import { mentionPattern } from '@app/lib/ingredients/recipe-mentions';
 import { getThumbnailUrl } from '@app/lib/thumbnail-client';
 import { APP_URL } from '@app/lib/url';
 
@@ -8,6 +9,13 @@ function minutesToIso8601Duration(minutes: number | undefined): string | undefin
     const h = Math.floor(minutes / 60);
     const m = minutes % 60;
     return m > 0 ? `PT${h}H${m}M` : `PT${h}H`;
+}
+
+/** Step text as plain prose: "@[Mehl|200 g](id)" becomes "Mehl (200 g)" (KUC-142). */
+export function mentionsToPlainText(text: string): string {
+    return text.replace(mentionPattern(), (_match, name: string, override?: string) =>
+        override?.trim() ? `${name} (${override.trim()})` : name,
+    );
 }
 
 type Props = {
@@ -112,12 +120,11 @@ export function RecipeJsonLd({ recipe, ogImageUrl, imageKey }: Props) {
                           '@type': 'HowToStep',
                           position: i + 1,
                           name: n.label,
-                          text: n.description || n.label,
-                          // Anchor + image satisfy Google's "image/video" and "url"
-                          // recommendations for recipeInstructions. We have no
-                          // per-step images, so the recipe's primary image is used.
+                          text: mentionsToPlainText(n.description || n.label),
                           url: `${recipeUrl}#step-${i + 1}`,
-                          image: images[0],
+                          // No per-step images: reuse the recipe photo, but never the
+                          // generic site placeholder (KUC-142)
+                          ...(imageKey && { image: images[0] }),
                           ...(n.duration && n.duration > 0
                               ? { totalTime: minutesToIso8601Duration(n.duration) }
                               : {}),

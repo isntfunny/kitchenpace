@@ -1,7 +1,9 @@
+import type { Metadata } from 'next';
 import { Suspense } from 'react';
 
 import { PageShell } from '@app/components/layouts/PageShell';
 import { FadeInSection } from '@app/components/motion/FadeInSection';
+import { APP_URL } from '@app/lib/url';
 
 import { css } from 'styled-system/css';
 import { grid } from 'styled-system/patterns';
@@ -22,6 +24,9 @@ import { TopRatedSection } from './components/TopRatedSection';
 import { TrendingTagsSection } from './components/TrendingTagsSection';
 
 export const revalidate = 60;
+
+// Only the home page: a canonical in the root layout would leak to every page (KUC-142)
+export const metadata: Metadata = { alternates: { canonical: APP_URL } };
 
 function SectionSkeleton({ height = '200px' }: { height?: string }) {
     return (

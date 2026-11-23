@@ -114,5 +114,15 @@ test('suggests the wanted meal when free, else the first free enabled one', () =
     assert.equal(suggestSlot(slots, ['DINNER'], 'DINNER'), 'BREAKFAST');
     assert.equal(suggestSlot(slots, ['BREAKFAST', 'DINNER'], 'DINNER'), 'LUNCH');
     assert.equal(suggestSlot(slots, ['BREAKFAST', 'LUNCH', 'DINNER'], 'DINNER'), 'DINNER');
-    assert.equal(suggestSlot(slots, ['BREAKFAST', 'LUNCH', 'DINNER'], null), null);
+    assert.equal(suggestSlot(slots, ['BREAKFAST', 'LUNCH', 'DINNER'], null), 'BREAKFAST');
+});
+
+test('never suggests a meal the user switched off', () => {
+    const slots = [
+        { key: 'BREAKFAST', enabled: true },
+        { key: 'LUNCH', enabled: true },
+        { key: 'DINNER', enabled: false },
+    ];
+    assert.equal(suggestSlot(slots, [], 'DINNER'), 'BREAKFAST');
+    assert.equal(suggestSlot(slots, ['BREAKFAST', 'LUNCH'], 'DINNER'), 'BREAKFAST');
 });

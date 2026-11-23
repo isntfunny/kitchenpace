@@ -113,8 +113,9 @@ export function calendarMonth({
 }
 
 /**
- * The meal to suggest on a day: the wanted one if it is free, else the first free enabled
- * meal; when every meal is taken the wanted one stays (a day may hold several dishes).
+ * The meal to suggest on a day: the wanted one if it is enabled and free, else the first free
+ * enabled meal; when every meal is taken the wanted one (or the first enabled) stays, since a
+ * day may hold several dishes. A switched-off meal is never suggested.
  */
 export function suggestSlot(
     slots: readonly { key: string; enabled: boolean }[],
@@ -122,6 +123,9 @@ export function suggestSlot(
     wanted: string | null,
 ): string | null {
     const taken = new Set(takenKeys);
-    if (wanted && !taken.has(wanted)) return wanted;
-    return slots.find((slot) => slot.enabled && !taken.has(slot.key))?.key ?? wanted;
+    const enabled = slots.filter((slot) => slot.enabled);
+    const wantedSlot = enabled.find((slot) => slot.key === wanted);
+    if (wantedSlot && !taken.has(wantedSlot.key)) return wantedSlot.key;
+    const free = enabled.find((slot) => !taken.has(slot.key));
+    return (free ?? wantedSlot ?? enabled[0])?.key ?? null;
 }

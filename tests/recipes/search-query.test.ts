@@ -140,3 +140,18 @@ test('sort "leftovers" survives the URL round trip', () => {
     assert.equal(filters.sort, 'leftovers');
     assert.equal(buildRecipeFilterQuery(filters).get('sort'), 'leftovers');
 });
+
+test('split query words add the title terms clause (KUC-144)', () => {
+    assert.equal(buildRecipeTextQuery('Pilzsuppe').length, 3);
+    const [first] = buildRecipeTextQuery('Pilzsuppe', [['pilz'], ['suppe']]);
+    assert.deepEqual(first, {
+        constant_score: {
+            filter: { bool: { must: [{ terms: { titleTerms: ['pilz'] } }, { terms: { titleTerms: ['suppe'] } }] } },
+            boost: 4,
+        },
+    });
+    const bool = buildRecipeBoolQuery({ query: 'Pilzsuppe' }, undefined, undefined, [['pilz'], ['suppe']]) as {
+        bool: { must: { bool: { should: unknown[] } }[] };
+    };
+    assert.equal(bool.bool.must[0].bool.should.length, 4);
+});

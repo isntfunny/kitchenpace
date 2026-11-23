@@ -20,6 +20,7 @@ import {
     type WeekPlanSearchData,
 } from '@app/lib/recipeSearchQuery';
 import type { RecipeSearchFacets, RecipeSearchMeta, TermFacet } from '@app/lib/recipeSearchTypes';
+import { loadQueryLeaves } from '@app/lib/search/query-leaves';
 import { semanticRecipeSearch } from '@app/lib/search/semanticSearch';
 import { toBerlinDate } from '@shared/dates';
 import { createLogger } from '@shared/logger';
@@ -241,6 +242,8 @@ export async function queryRecipes(
         }
     }
 
+    const leaves = query ? await loadQueryLeaves(query) : undefined;
+
     const sortMap: Record<string, Record<string, unknown>[]> = {
         rating: [{ rating: 'desc' }, { publishedAt: 'desc' }],
         newest: [{ publishedAt: 'desc' }],
@@ -256,10 +259,10 @@ export async function queryRecipes(
         body: {
             query: isLeftovers
                 ? withPantryIngredients(
-                      buildRecipeBoolQuery(filters, context, weekPlan),
+                      buildRecipeBoolQuery(filters, context, weekPlan, leaves),
                       pantry!.indexNames,
                   )
-                : buildRecipeBoolQuery(filters, context, weekPlan),
+                : buildRecipeBoolQuery(filters, context, weekPlan, leaves),
             sort: osSort,
             from: isRanked ? 0 : from,
             size: isRanked ? poolSize : limit,

@@ -1,5 +1,7 @@
 import { Client } from '@opensearch-project/opensearch';
 
+import { titleTermsClause } from './title-terms';
+
 const nodeUrl = process.env.OPENSEARCH_URL ?? 'http://localhost:9200';
 const recipesIndex = process.env.OPENSEARCH_INDEX ?? 'recipes';
 const ingredientsIndex = process.env.OPENSEARCH_INGREDIENTS_INDEX ?? 'ingredients';
@@ -70,8 +72,14 @@ export async function getRecipeCounts(
  * Combines fuzzy full-text, prefix, and substring matching.
  * Returns an array of `should` clauses — wrap in a bool query with minimum_should_match: 1.
  */
-export function buildRecipeTextQuery(query: string): Record<string, unknown>[] {
+export function buildRecipeTextQuery(
+    query: string,
+    leaves: string[][] = [],
+): Record<string, unknown>[] {
+    // Split query words found among the title terms (KUC-144, see title-terms.ts)
+    const titleClause = titleTermsClause(leaves);
     return [
+        ...(titleClause ? [titleClause] : []),
         {
             multi_match: {
                 query,
@@ -123,6 +131,8 @@ const RECIPES_MAPPINGS = {
         imagePlaceholder: { type: 'keyword', index: false, doc_values: false },
         publishedAt: { type: 'date' },
         keywords: { type: 'text' },
+        // Lower-case title words, parts and synonyms (KUC-144)
+        titleTerms: { type: 'keyword' },
     },
 };
 

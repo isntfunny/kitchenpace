@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server';
 
 import { getServerAuthSession } from '@app/lib/auth';
 import { checkRateLimit } from '@app/lib/rate-limit';
+import { loadQueryLeaves } from '@app/lib/search/query-leaves';
 import { semanticRecipeSearch } from '@app/lib/search/semanticSearch';
 import { deriveKey, encryptChunk, generateSalt } from '@app/lib/search/streamCrypto';
 import {
@@ -138,13 +139,14 @@ export async function GET(request: NextRequest) {
                     }),
                 ]);
 
+                const leaves = await loadQueryLeaves(query);
                 const textPromise = Promise.all([
                     opensearchClient.search({
                         index: OPENSEARCH_INDEX,
                         body: {
                             query: {
                                 bool: {
-                                    should: buildRecipeTextQuery(query),
+                                    should: buildRecipeTextQuery(query, leaves),
                                     minimum_should_match: 1,
                                     filter: [{ term: { status: 'PUBLISHED' } }],
                                 },

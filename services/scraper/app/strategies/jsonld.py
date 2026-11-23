@@ -19,28 +19,44 @@ _TITLE_RE = re.compile(r'<title[^>]*>(.*?)</title>', re.S | re.I)
 _ERROR_PATTERNS = ["404", "not found", "nicht gefunden", "fehler", "error", "page not found", "seite nicht gefunden"]
 
 
+def _nodes(data):
+    """Yield every JSON-LD object, including those nested in lists and @graph."""
+    if isinstance(data, list):
+        for item in data:
+            yield from _nodes(item)
+    elif isinstance(data, dict):
+        yield data
+        yield from _nodes(data.get("@graph", []))
+
+
+def _is_recipe(node: dict) -> bool:
+    t = node.get("@type")
+    return t == "Recipe" or (isinstance(t, list) and "Recipe" in t)
+
+
+def _resolve(value, by_id: dict):
+    """Replace {"@id": ...} references (chefkoch puts the ImageObject elsewhere in @graph)."""
+    if isinstance(value, list):
+        return [_resolve(v, by_id) for v in value]
+    if isinstance(value, dict) and set(value) == {"@id"}:
+        return by_id.get(value["@id"], value)
+    return value
+
+
 def _find_recipe(html: str) -> Optional[dict]:
-    """Find the first schema.org Recipe object in JSON-LD scripts."""
+    """Find the first schema.org Recipe object in JSON-LD scripts, with its image reference resolved."""
+    nodes = []
     for m in _JSONLD_RE.finditer(html):
         try:
-            data = json.loads(m.group(1))
+            nodes.extend(_nodes(json.loads(m.group(1))))
         except json.JSONDecodeError:
             continue
-
-        # Direct Recipe object
-        if isinstance(data, dict):
-            if data.get("@type") == "Recipe":
-                return data
-            # Nested in @graph array
-            for item in data.get("@graph", []):
-                if isinstance(item, dict) and item.get("@type") == "Recipe":
-                    return item
-
-        # Array of objects
-        if isinstance(data, list):
-            for item in data:
-                if isinstance(item, dict) and item.get("@type") == "Recipe":
-                    return item
+    by_id = {n["@id"]: n for n in nodes if isinstance(n.get("@id"), str)}
+    for node in nodes:
+        if _is_recipe(node):
+            if "image" in node:
+                return {**node, "image": _resolve(node["image"], by_id)}
+            return node
     return None
 
 
@@ -81,10 +97,13 @@ def _recipe_to_markdown(r: dict) -> str:
         lines.append(" | ".join(meta))
 
     # Nutrition
-    if n := r.get("nutrition"):
+    n = r.get("nutrition")
+    if isinstance(n, list):  # oetker.de sends a list
+        n = next((x for x in n if isinstance(x, dict)), None)
+    if isinstance(n, dict):
         parts = []
         if c := n.get("calories"):
-            parts.append(c)
+            parts.append(str(c))
         if p := n.get("proteinContent"):
             parts.append(f"Protein: {p}")
         if f := n.get("fatContent"):
@@ -110,7 +129,7 @@ def _recipe_to_markdown(r: dict) -> str:
                 step_num += 1
                 lines.append(f"{step_num}. {item}")
             elif isinstance(item, dict):
-                if item.get("@type") == "HowToStep":
+                if item.get("@type") == "HowToStep" or ("text" in item and "itemListElement" not in item):
                     step_num += 1
                     lines.append(f"{step_num}. {item.get('text', '')}")
                 elif item.get("@type") == "HowToSection":
@@ -123,15 +142,25 @@ def _recipe_to_markdown(r: dict) -> str:
 
 
 def _get_image(r: dict) -> Optional[str]:
-    """Extract best image URL from Recipe object."""
-    img = r.get("image")
-    if isinstance(img, str):
-        return img
-    if isinstance(img, list) and img:
-        return img[0]
-    if isinstance(img, dict):
-        return img.get("url") or img.get("contentUrl")
-    return None
+    """Extract the best image URL from a Recipe object; always a string or None.
+
+    Sites send a URL, a list of URLs, an ImageObject or a list of ImageObjects.
+    """
+    def url_of(img) -> Optional[str]:
+        if isinstance(img, str):
+            return img or None
+        if isinstance(img, list):
+            for item in img:
+                if found := url_of(item):
+                    return found
+            return None
+        if isinstance(img, dict):
+            for key in ("url", "contentUrl"):
+                if isinstance(img.get(key), str) and img[key]:
+                    return img[key]
+        return None
+
+    return url_of(r.get("image"))
 
 
 async def _fetch_html(url: str, mode: str, timeout: int) -> Optional[str]:

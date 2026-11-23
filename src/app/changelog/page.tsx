@@ -32,6 +32,21 @@ const TAG_STYLES: Record<string, { label: string; bg: string }> = {
 
 const CHANGELOG: ChangelogEntry[] = [
     {
+        date: '23. November 2026',
+        title: 'Suche versteht mehr Wörter',
+        emoji: '🔎',
+        items: [
+            {
+                text: 'Die Rezeptsuche findet Gerichte jetzt auch über Wortteile und andere Namen: „Pilzcremesuppe“ findet die Champignon-Cremesuppe, „Erdäpfel“ die Kartoffelsuppe, „Faschiertes“ Rezepte mit Hackfleisch und „Eierkuchen“ Pfannkuchen.',
+                tag: 'feat',
+            },
+            {
+                text: 'Doppelte Zutaten wie Karotte und Möhre sind zusammengeführt. Filter, Einkaufsliste und Vorrat zeigen sie jetzt als eine Zutat.',
+                tag: 'fix',
+            },
+        ],
+    },
+    {
         date: '22. November 2026',
         title: 'Wochenplan, Einkaufsliste und Vorrat',
         emoji: '📅',

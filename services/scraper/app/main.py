@@ -18,7 +18,7 @@ from app.telemetry import init_telemetry
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)-8s %(message)s", datefmt="%H:%M:%S")
 log = logging.getLogger("scraper")
 
-app = FastAPI(title="KitchenPace Scraper", version="2.4.0")
+app = FastAPI(title="KitchenPace Scraper", version="2.4.1")
 init_telemetry(app)
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 

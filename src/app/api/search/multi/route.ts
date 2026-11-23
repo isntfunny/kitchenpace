@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import { loadQueryLeaves } from '@app/lib/search/query-leaves';
 import {
     buildRecipeTextQuery,
     buildSuggestQuery,
@@ -59,6 +60,7 @@ export async function GET(request: NextRequest) {
     const wantsUsers = wantsAll || requestedTypes.has('users');
 
     try {
+        const leaves = await loadQueryLeaves(query);
         // Query 1: Recipe search
         const recipesPromise = wantsRecipes
             ? opensearchClient.search({
@@ -66,7 +68,7 @@ export async function GET(request: NextRequest) {
                   body: {
                       query: {
                           bool: {
-                              should: buildRecipeTextQuery(query),
+                              should: buildRecipeTextQuery(query, leaves),
                               minimum_should_match: 1,
                               filter: [{ term: { status: 'PUBLISHED' } }],
                           },

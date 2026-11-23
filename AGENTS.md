@@ -438,6 +438,7 @@ Redis pub/sub powers server-sent events for live updates. `clientStream.ts` pool
 ### Search Features (via `/api/recipes/filter`)
 
 - Multi-match: `title^3, description, keywords, ingredients^2` (fuzziness: AUTO)
+- Title terms (KUC-144): the recipe sync stores `titleTerms` (keyword): title words, their compound parts and the synonyms of parts that are ingredients (one-word ingredient names, aliases without comma, generic words of sub-categories like Pilze → "pilz", plus dish synonyms in code). A query is only split, never expanded; every split word must be among the title terms. Code: `shared/opensearch/title-terms.ts`; dictionary from the ingredient table, cached for an hour (`title-dictionary.ts`). When the dictionary hash changes, `sync-recipes` re-indexes all recipes
 - Meal time slots: morgen (0-25m), mittag (20-45m), nachmittag (25-60m), abend (30-90m), snack (0-20m)
 - Range filters: time, rating, cook count
 - Ingredient inclusion/exclusion with AND/OR

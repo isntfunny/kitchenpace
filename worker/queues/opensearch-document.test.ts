@@ -2,6 +2,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
+import { buildTitleDictionary } from '../../shared/opensearch/title-terms';
+
 import { transformToDocument } from './opensearch-processor';
 
 test('document carries all category slugs and rating count', () => {
@@ -71,4 +73,41 @@ test('document carries the derived main ingredients (KUC-131)', () => {
     });
     assert.deepEqual(doc.mainIngredients, ['Rinderhackfleisch', 'Spaghetti']);
     assert.deepEqual(doc.ingredients, ['Rinderhackfleisch', 'Spaghetti', 'Karotten', 'Olivenöl']);
+});
+
+test('document carries title terms with ingredient synonyms (KUC-144)', () => {
+    const dictionary = buildTitleDictionary([
+        {
+            name: 'Champignon',
+            normalizedName: null,
+            pluralName: null,
+            aliases: ['Egerling'],
+            categories: [{ name: 'Pilze', rootSlug: 'gemuese' }],
+        },
+    ]);
+    const recipe = {
+        id: 'r2',
+        slug: 'champignon-cremesuppe',
+        title: 'Champignon-Cremesuppe',
+        description: null,
+        difficulty: 'EASY',
+        status: 'PUBLISHED',
+        totalTime: 30,
+        prepTime: 10,
+        cookTime: 20,
+        caloriesPerServing: null,
+        rating: 0,
+        ratingCount: 0,
+        cookCount: 0,
+        imageKey: null,
+        publishedAt: null,
+        updatedAt: new Date('2026-11-23T00:00:00Z'),
+        flowNodes: [],
+        tags: [],
+        recipeIngredients: [],
+        categories: [],
+    } as const;
+    const doc = transformToDocument({ ...recipe, flowNodes: [], tags: [], recipeIngredients: [], categories: [] }, dictionary);
+    for (const term of ['champignon', 'pilz', 'egerling', 'creme', 'suppe']) assert.ok(doc.titleTerms?.includes(term), term);
+    assert.equal(transformToDocument({ ...recipe, flowNodes: [], tags: [], recipeIngredients: [], categories: [] }).titleTerms, undefined);
 });

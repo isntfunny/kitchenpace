@@ -76,6 +76,8 @@ export function buildRecipeBoolQuery(
     filters: RecipeFilterSearchParams,
     context?: RecipeSearchContext,
     week?: WeekPlanSearchData,
+    /** Split query words for the title terms (KUC-144); loaded by the caller */
+    queryLeaves?: string[][],
 ): Clause {
     const {
         query,
@@ -100,7 +102,7 @@ export function buildRecipeBoolQuery(
     if (context?.kind) bool.filter.push(mealKindQuery(context.kind));
 
     if (query) {
-        bool.must.push({ bool: { should: buildRecipeTextQuery(query), minimum_should_match: 1 } });
+        bool.must.push({ bool: { should: buildRecipeTextQuery(query, queryLeaves), minimum_should_match: 1 } });
     }
 
     const clauses: Clause[] = [];

@@ -22,6 +22,8 @@ import {
     OPENSEARCH_TAGS_INDEX,
     OPENSEARCH_EMBEDDINGS_INDEX,
 } from '@shared/opensearch/client';
+import { loadTitleDictionary, loadTitleDictionaryFresh } from '@shared/opensearch/title-dictionary';
+import { titleTerms, type TitleDictionary } from '@shared/opensearch/title-terms';
 
 import { LOCKED_REQUEUE_DELAY_MS, redisBatchStore, withBatchLock } from './batch-job';
 import { getRedis } from './connection';
@@ -45,6 +47,8 @@ import {
 } from './types';
 
 const WATERMARK_KEY_RECIPES = 'opensearch:watermark:recipes';
+/** Hash of the title dictionary the recipe documents were built with (KUC-144) */
+const TITLE_DICTIONARY_HASH_KEY = 'opensearch:title-dictionary:hash';
 const WATERMARK_KEY_INGREDIENTS = 'opensearch:watermark:ingredients';
 const WATERMARK_KEY_TAGS = 'opensearch:watermark:tags';
 
@@ -127,6 +131,8 @@ type RecipeDocument = {
     publishedAt?: string;
     status: string;
     keywords: string[];
+    /** Title words, their parts and synonyms (KUC-144) */
+    titleTerms?: string[];
 };
 
 type IngredientWithDetails = {
@@ -188,7 +194,10 @@ function buildIngredientBulkOperations(ingredients: IngredientWithDetails[]): Bu
     return operations;
 }
 
-export function transformToDocument(recipe: RecipeWithRelations): RecipeDocument {
+export function transformToDocument(
+    recipe: RecipeWithRelations,
+    dictionary?: TitleDictionary,
+): RecipeDocument {
     const tags = normalizeStringArray(recipe.tags.map((entry) => entry.tag?.name));
     const ingredients = normalizeStringArray(
         recipe.recipeIngredients.map((entry) => entry.ingredient?.name),
@@ -249,6 +258,7 @@ export function transformToDocument(recipe: RecipeWithRelations): RecipeDocument
         publishedAt: recipe.publishedAt?.toISOString(),
         status: recipe.status,
         keywords,
+        ...(dictionary ? { titleTerms: titleTerms(dictionary, recipe.title) } : {}),
     };
 }
 
@@ -260,11 +270,14 @@ function normalizeStringArray(values: Array<string | undefined | null>) {
     );
 }
 
-function buildBulkOperations(recipes: RecipeWithRelations[]): BulkOperation[] {
+function buildBulkOperations(
+    recipes: RecipeWithRelations[],
+    dictionary: TitleDictionary,
+): BulkOperation[] {
     const operations: BulkOperation[] = [];
     for (const recipe of recipes) {
         operations.push({ index: { _index: OPENSEARCH_INDEX, _id: recipe.id } });
-        operations.push(transformToDocument(recipe));
+        operations.push(transformToDocument(recipe, dictionary));
     }
     return operations;
 }
@@ -390,7 +403,10 @@ export async function processSyncRecipes(job: Job<SyncRecipesJob>): Promise<{ sy
     try {
         await ensureIndicesOnce();
         const redis = getRedis();
-        const watermarkRaw = await redis.get(WATERMARK_KEY_RECIPES);
+        // A changed title dictionary (new synonyms, merged ingredients) re-indexes everything
+        const dictionary = await loadTitleDictionaryFresh(prisma);
+        const dictionaryChanged = (await redis.get(TITLE_DICTIONARY_HASH_KEY)) !== dictionary.hash;
+        const watermarkRaw = dictionaryChanged ? null : await redis.get(WATERMARK_KEY_RECIPES);
         const watermark = watermarkRaw ? new Date(watermarkRaw) : undefined;
 
         if (watermark) {
@@ -440,7 +456,7 @@ export async function processSyncRecipes(job: Job<SyncRecipesJob>): Promise<{ sy
 
             if (recipes.length === 0) break;
 
-            const operations = buildBulkOperations(recipes);
+            const operations = buildBulkOperations(recipes, dictionary);
             await runBulkOperations(operations);
 
             totalSynced += recipes.length;
@@ -458,6 +474,8 @@ export async function processSyncRecipes(job: Job<SyncRecipesJob>): Promise<{ sy
 
             if (recipes.length < pageSize) break;
         }
+
+        if (dictionaryChanged) await redis.set(TITLE_DICTIONARY_HASH_KEY, dictionary.hash);
 
         // Advance the watermark
         if (latestUpdatedAt) {
@@ -655,7 +673,7 @@ export async function processSyncRecipeToOpenSearch(
             return { success: true, action: 'deleted' };
         }
 
-        const doc = transformToDocument(recipe);
+        const doc = transformToDocument(recipe, await loadTitleDictionary(prisma));
         await ensureIndicesOnce();
 
         await opensearchClient.index({

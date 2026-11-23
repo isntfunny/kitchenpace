@@ -3,6 +3,7 @@
 import type { FilterSetWithRelations } from '@app/lib/fits-now/db-queries';
 import { SEASON_LABELS, TIME_SLOT_LABELS, type Season } from '@app/lib/fits-now/labels';
 import { isSeasonalFilterSetHighlighted } from '@app/lib/fits-now/season';
+import type { WeekPlanFilter } from '@shared/recipe-filters';
 import { isThemeActive, type ThemeChip } from '@shared/theme-clusters/release';
 
 import { css } from 'styled-system/css';
@@ -71,7 +72,25 @@ type FilterSetChipBarProps = {
     /** Current tag/category filters, to mark active themes */
     filters?: { tags?: string[]; categories?: string[] };
     onThemeToggle?: (theme: ThemeChip) => void;
+    /** Week plan quick filters (KUC-131); only for logged-in users with a planned week */
+    weekPlan?: {
+        active?: WeekPlanFilter;
+        onToggle: (mode: WeekPlanFilter) => void;
+    };
 };
+
+const WEEK_PLAN_PILLS: { mode: WeekPlanFilter; label: string; title: string }[] = [
+    {
+        mode: 'with',
+        label: 'Mit Zutaten aus meinem Wochenplan',
+        title: 'Rezepte, die Hauptzutaten deiner geplanten Woche weiterverwenden',
+    },
+    {
+        mode: 'without',
+        label: 'Ohne Hauptzutaten aus meinem Wochenplan',
+        title: 'Mehr Abwechslung: die Hauptzutat kommt in deiner Woche noch nicht vor',
+    },
+];
 
 /** Horizontally scrollable FilterSet chips between the search header and the results. */
 export function FilterSetChipBar({
@@ -82,11 +101,28 @@ export function FilterSetChipBar({
     themes = [],
     filters = {},
     onThemeToggle,
+    weekPlan,
 }: FilterSetChipBarProps) {
-    if (filterSets.length === 0 && themes.length === 0) return null;
+    if (filterSets.length === 0 && themes.length === 0 && !weekPlan) return null;
 
     return (
         <div role="group" aria-label="Schnell-Filter" className={rowClass}>
+            {weekPlan &&
+                WEEK_PLAN_PILLS.map((pill) => {
+                    const isActive = weekPlan.active === pill.mode;
+                    return (
+                        <button
+                            key={pill.mode}
+                            type="button"
+                            aria-pressed={isActive}
+                            title={pill.title}
+                            onClick={() => weekPlan.onToggle(pill.mode)}
+                            className={`${chipBaseClass} ${isActive ? chipActiveClass : chipInactiveClass}`}
+                        >
+                            {pill.label}
+                        </button>
+                    );
+                })}
             {filterSets.map((fs) => {
                 const isActive = activeFilterSetId === fs.id;
                 const isHighlighted =

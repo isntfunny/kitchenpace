@@ -268,6 +268,7 @@ function WeekSelectionBody({ data, onClose, onApplied }: BodyProps & { data: Wee
                         themes={data.startData.themes}
                         currentSeason={data.startData.currentSeason}
                         isLoggedIn
+                        personal={data.personal}
                         title={tabLabel}
                         titleAs="h2"
                         sortOptions={SORT_OPTIONS}

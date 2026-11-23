@@ -1,4 +1,5 @@
 import type { RecipeCardData } from '@app/app/actions/recipes';
+import { loadWeekPlanSearchData } from '@app/lib/recipes/personal-search.server';
 import { rankedSearch } from '@app/lib/recipes/ranked-search';
 import {
     knnRecipeIds,
@@ -12,6 +13,7 @@ import {
     buildRecipeBoolQuery,
     semanticPrependAllowed,
     type RecipeSearchContext,
+    type WeekPlanSearchData,
 } from '@app/lib/recipeSearchQuery';
 import type { RecipeSearchFacets, RecipeSearchMeta, TermFacet } from '@app/lib/recipeSearchTypes';
 import { semanticRecipeSearch } from '@app/lib/search/semanticSearch';
@@ -184,6 +186,18 @@ export async function queryRecipes(
     });
     const isRanked = effectiveSort === 'taste' || effectiveSort === 'week';
 
+    // Week plan quick filter (KUC-131): the plan is read on the server, never from the client
+    let weekPlan: WeekPlanSearchData | undefined;
+    if (filters.weekPlan && userId) {
+        try {
+            weekPlan = await loadWeekPlanSearchData(userId, context?.week);
+        } catch (err) {
+            log.warn('Loading the week plan for the search failed', {
+                error: err instanceof Error ? err.message : String(err),
+            });
+        }
+    }
+
     const sortMap: Record<string, Record<string, unknown>[]> = {
         rating: [{ rating: 'desc' }, { publishedAt: 'desc' }],
         newest: [{ publishedAt: 'desc' }],
@@ -197,7 +211,7 @@ export async function queryRecipes(
     const response = await opensearchClient.search({
         index: OPENSEARCH_INDEX,
         body: {
-            query: buildRecipeBoolQuery(filters, context),
+            query: buildRecipeBoolQuery(filters, context, weekPlan),
             sort: osSort,
             from: isRanked ? 0 : from,
             size: isRanked ? RANKED_POOL_SIZE : limit,
@@ -293,7 +307,8 @@ export async function queryRecipes(
     }
 
     // Semantic search: prepend embedding-based hits on first page for 4+ word queries
-    if (query && userId && semanticPrependAllowed({ query, userId, page, context })) {
+    const personal = !!filters.weekPlan;
+    if (query && userId && semanticPrependAllowed({ query, userId, page, context, personal })) {
         try {
             const existingIds = new Set(data.map((r) => r.id));
             const { recipes: semanticHits } = await semanticRecipeSearch(

@@ -30,7 +30,7 @@ const recipe = (id: string, status = 'PUBLISHED') => ({
     moderationStatus: 'APPROVED',
     authorId: 'alice',
     imageKey: null,
-    blurhash: null,
+    imagePlaceholder: null,
     totalTime: 30,
 });
 

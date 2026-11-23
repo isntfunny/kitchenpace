@@ -2,6 +2,7 @@ import { ListObjectsV2Command, DeleteObjectsCommand } from '@aws-sdk/client-s3';
 import { Job } from 'bullmq';
 
 import { syncContactToNotifuse } from '@app/lib/notifuse/email';
+import { updateRecipeImagePlaceholder } from '@app/lib/recipe-image-placeholder';
 import { s3Client, BUCKET, generateOgImage, ogThumbKey, exists } from '@app/lib/s3';
 
 import { redisConfig } from './connection';
@@ -10,6 +11,7 @@ import { getBackupQueue } from './queue';
 import type {
     GenerateRecipeOgJob,
     GenerateOgImagesJob,
+    BackfillRecipeImagePlaceholdersJob,
     BackfillIngredientPluralsJob,
     BackupJob,
 } from './types';
@@ -339,6 +341,14 @@ export async function processGenerateRecipeOg(
     const { recipeId, imageKey } = job.data;
     console.log(`[OgWorker] Generating OG image for recipe ${recipeId}, key: ${imageKey}`);
 
+    // Blurred preview for cards (KUC-146). Runs after every image approval, so a new
+    // image gets its preview right away; failures are left to the backfill job.
+    await updateRecipeImagePlaceholder(recipeId).catch((error) =>
+        console.error(`[OgWorker] Image placeholder for recipe ${recipeId} failed`, {
+            error: error instanceof Error ? error.message : String(error),
+        }),
+    );
+
     try {
         const tKey = ogThumbKey(imageKey);
 
@@ -407,6 +417,47 @@ export async function processGenerateOgImages(
         });
         throw error;
     }
+}
+
+/**
+ * Scheduled job (KUC-146): store the blurred preview for every recipe whose public
+ * image has none yet. The preview is cleared by a DB trigger whenever imageKey
+ * changes, so this also catches images set by paths that enqueue no OG job.
+ */
+export async function processBackfillRecipeImagePlaceholders(
+    job: Job<BackfillRecipeImagePlaceholdersJob>,
+): Promise<{ success: boolean; scanned: number; created: number; failed: number }> {
+    const batchSize = job.data.batchSize ?? 200;
+    const recipes = await prisma.recipe.findMany({
+        where: {
+            imagePlaceholder: null,
+            OR: [
+                { imageKey: { startsWith: 'approved/' } },
+                { imageKey: { startsWith: 'legacy/' } },
+            ],
+        },
+        select: { id: true },
+        orderBy: { updatedAt: 'desc' },
+        take: batchSize,
+    });
+
+    let created = 0;
+    let failed = 0;
+    for (const recipe of recipes) {
+        try {
+            if ((await updateRecipeImagePlaceholder(recipe.id)) === 'created') created++;
+        } catch (error) {
+            failed++;
+            console.error(`[ImagePlaceholder] Recipe ${recipe.id} failed`, {
+                error: error instanceof Error ? error.message : String(error),
+            });
+        }
+    }
+
+    console.log(
+        `[ImagePlaceholder] ${created} created, ${failed} failed of ${recipes.length} scanned`,
+    );
+    return { success: true, scanned: recipes.length, created, failed };
 }
 
 export async function processBackfillIngredientPlurals(

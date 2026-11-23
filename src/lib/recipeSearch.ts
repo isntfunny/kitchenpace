@@ -49,6 +49,7 @@ const mapDocumentToRecipeCard = (document: Record<string, unknown>): RecipeCardD
         time: totalTime > 0 ? `${totalTime} Min.` : '—',
         image: (document.imageKey as string) ?? null,
         imageKey: (document.imageKey as string) ?? null,
+        imagePlaceholder: (document.imagePlaceholder as string) ?? null,
         description: (document.description as string) || '',
         stepCount: Number(document.stepCount ?? 0) || undefined,
         difficulty:

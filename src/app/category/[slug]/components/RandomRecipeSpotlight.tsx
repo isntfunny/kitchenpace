@@ -151,6 +151,7 @@ export function RandomRecipeSpotlight({ categorySlug, tagSlugs }: RandomRecipeSp
                         {recipe.imageKey ? (
                             <SmartImage
                                 imageKey={recipe.imageKey}
+                                placeholder={recipe.imagePlaceholder}
                                 recipeId={recipe.id}
                                 alt={recipe.title}
                                 aspect="1:1"

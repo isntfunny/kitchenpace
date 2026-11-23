@@ -431,7 +431,8 @@ model Recipe {
   slug                                                                       String              @unique
   description                                                                String?
   imageKey                                                                   String?
-  blurhash                                                                   String?
+  blurhash                                                                   String? // unused, superseded by imagePlaceholder (KUC-146); drop in a later migration
+  imagePlaceholder                                                           String? // tiny blurred WebP data URL, shown until the image loads (KUC-146)
   imageWidth                                                                 Int?
   imageHeight                                                                Int?
   servings                                                                   Int                 @default(4)

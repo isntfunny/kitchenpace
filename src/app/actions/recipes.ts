@@ -136,6 +136,8 @@ export interface RecipeDetailData {
     description: string;
     image: string | null;
     imageKey?: string | null;
+    /** Blurred preview data URL, shown until the image loads (KUC-146) */
+    imagePlaceholder?: string | null;
     category: string;
     categorySlug?: string;
     categoryColor?: string;
@@ -384,6 +386,7 @@ export async function fetchRecipeBySlug(
         ratingCount: recipe.ratingCount ?? 0,
         cookCount: recipe.cookCount ?? 0,
         imageKey: recipe.imageKey ?? null,
+        imagePlaceholder: recipe.imagePlaceholder ?? null,
         publishedAt: recipe.publishedAt?.toISOString() ?? null,
         updatedAt: recipe.updatedAt.toISOString(),
         sourceUrl: recipe.sourceUrl ?? null,

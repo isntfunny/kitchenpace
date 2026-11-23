@@ -270,7 +270,7 @@ function sharedEntries(db: Db, ownerId: string, start: string) {
                     title: true,
                     slug: true,
                     imageKey: true,
-                    blurhash: true,
+                    imagePlaceholder: true,
                     totalTime: true,
                 },
             },

@@ -119,6 +119,8 @@ const RECIPES_MAPPINGS = {
         cookCount: { type: 'integer' },
         stepCount: { type: 'integer' },
         imageKey: { type: 'keyword' },
+        // Blurred preview data URL (KUC-146): only returned, never searched
+        imagePlaceholder: { type: 'keyword', index: false, doc_values: false },
         publishedAt: { type: 'date' },
         keywords: { type: 'text' },
     },

@@ -11,6 +11,7 @@ import { css } from 'styled-system/css';
 type HeroImage = {
     src: string;
     thumbKey?: string | null;
+    placeholder?: string | null;
     title: string;
     subtitle?: string;
     reportable?: {
@@ -95,6 +96,7 @@ export function HeroImageGallery({
                         src={currentImage?.src}
                         alt={currentImage?.title ?? recipeTitle}
                         fill
+                        placeholder={currentImage?.placeholder}
                     />
                 </div>
                 {heroCount > 1 && (

@@ -43,6 +43,11 @@ export interface GenerateOgImagesJob {
     batchSize?: number;
 }
 
+export interface BackfillRecipeImagePlaceholdersJob {
+    /** Max recipes per run */
+    batchSize?: number;
+}
+
 export interface BackfillIngredientPluralsJob {
     batchSize?: number;
     dryRun?: boolean;

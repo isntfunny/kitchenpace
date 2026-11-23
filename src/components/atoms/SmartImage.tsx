@@ -1,7 +1,7 @@
 'use client';
 
 import { ChefHat } from 'lucide-react';
-import { useState } from 'react';
+import { useCallback, useRef, useState, type SyntheticEvent } from 'react';
 
 import { PALETTE } from '@app/lib/palette';
 import {
@@ -39,7 +39,36 @@ interface SmartImageProps {
     loading?: 'lazy' | 'eager';
     /** Set to "high" for the LCP hero image so the browser fetches it first. */
     fetchPriority?: 'high' | 'low' | 'auto';
+    /**
+     * Tiny blurred preview (data URL, KUC-146). With `fill`, it is shown at once and
+     * the image fades in over it once loaded.
+     */
+    placeholder?: string | null;
 }
+
+const FADE_MS = 400;
+
+const placeholderWrapperClass = css({
+    position: 'relative',
+    display: 'block',
+    width: '100%',
+    height: '100%',
+    overflow: 'hidden',
+    borderRadius: 'inherit',
+});
+
+const placeholderLayerClass = css({
+    position: 'absolute',
+    inset: '0',
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+    // The stored preview is only 16 px; blur it strongly and scale up so the
+    // blurred edges stay outside the box.
+    filter: 'blur(14px)',
+    transform: 'scale(1.15)',
+    transition: `opacity ${FADE_MS}ms ease`,
+    pointerEvents: 'none',
+});
 
 export function SmartImage({
     src,
@@ -58,8 +87,18 @@ export function SmartImage({
     height,
     loading = 'lazy',
     fetchPriority = 'auto',
+    placeholder,
 }: SmartImageProps) {
     const [error, setError] = useState(false);
+    const layerRef = useRef<HTMLSpanElement>(null);
+
+    // The img may be server-rendered and loaded before hydration, so its load event
+    // can be missed. Only an image still loading at mount is hidden and faded in;
+    // without JS the image simply covers the preview when it arrives.
+    const fadeInRef = useCallback((img: HTMLImageElement | null) => {
+        if (!img || img.complete) return;
+        img.style.opacity = '0';
+    }, []);
 
     // If recipeId is provided but no src, render placeholder immediately
     const noImage = recipeId && !src && !imageKey;
@@ -90,7 +129,13 @@ export function SmartImage({
         onError?.();
     };
 
-    const handleLoad = () => {
+    const handleLoad = (event: SyntheticEvent<HTMLImageElement>) => {
+        const img = event.currentTarget;
+        if (img.style.opacity === '0') {
+            img.style.transition = `opacity ${FADE_MS}ms ease`;
+            img.style.opacity = '1';
+        }
+        if (layerRef.current) layerRef.current.style.opacity = '0';
         onLoad?.();
     };
 
@@ -126,8 +171,11 @@ export function SmartImage({
         error && recipeId ? RECIPE_PLACEHOLDER : !thumbnailSrc || error ? fallback : thumbnailSrc;
     const isShowingFallback = noImage || error;
 
-    return (
+    const withPlaceholder = Boolean(placeholder && fill && !isShowingFallback);
+
+    const img = (
         <img
+            ref={withPlaceholder ? fadeInRef : undefined}
             src={resolvedSrc}
             srcSet={isShowingFallback ? undefined : srcSet}
             sizes={isShowingFallback ? undefined : sizes}
@@ -154,8 +202,23 @@ export function SmartImage({
                       : css({
                             objectFit: 'cover',
                         }),
+                withPlaceholder && css({ position: 'relative' }),
                 className,
             )}
         />
+    );
+
+    if (!withPlaceholder) return img;
+
+    return (
+        <span className={placeholderWrapperClass}>
+            <span
+                ref={layerRef}
+                aria-hidden
+                className={placeholderLayerClass}
+                style={{ backgroundImage: `url("${placeholder}")` }}
+            />
+            {img}
+        </span>
     );
 }

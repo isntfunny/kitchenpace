@@ -100,6 +100,7 @@ type CookImageItem = {
 type HeroImage = {
     src: string;
     thumbKey?: string | null;
+    placeholder?: string | null;
     title: string;
     subtitle?: string;
     reportable?: {
@@ -244,6 +245,7 @@ export function RecipeDetailClient({
         const primary: HeroImage = {
             src: recipe.image,
             thumbKey: recipe.imageKey ?? null,
+            placeholder: recipe.imagePlaceholder ?? null,
             title: recipe.title,
             subtitle: 'Rezeptbild',
         };
@@ -260,7 +262,7 @@ export function RecipeDetailClient({
             },
         }));
         return [primary, ...extras];
-    }, [cookImages, recipe.image, recipe.imageKey, recipe.title]);
+    }, [cookImages, recipe.image, recipe.imageKey, recipe.imagePlaceholder, recipe.title]);
 
     // Recipe tabs context for tracking views
     const { addToRecent } = useRecipeTabs();

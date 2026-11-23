@@ -187,6 +187,14 @@ export const JOB_CATALOG = {
             imageKey: { type: 'string', label: 'Image Key', placeholder: 'approved/...' },
         },
     },
+    'backfill-recipe-image-placeholders': {
+        queue: QueueName.SCHEDULED,
+        defaultData: { batchSize: 200 },
+        schema: {
+            batchSize: { type: 'number', label: 'Batch Size', default: 200, min: 1, max: 2000 },
+        },
+        repeat: { pattern: '*/15 * * * *', tz: 'Europe/Berlin' },
+    },
     'purge-thumbnail-cache': {
         queue: QueueName.SCHEDULED,
         defaultData: { maxAgeDays: 3 },

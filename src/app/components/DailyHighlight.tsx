@@ -41,6 +41,7 @@ export function DailyHighlight({ recipe }: DailyHighlightProps) {
                         >
                             <SmartImage
                                 imageKey={recipe.imageKey}
+                                placeholder={recipe.imagePlaceholder}
                                 alt={recipe.title}
                                 fill
                                 aspect="16:9"

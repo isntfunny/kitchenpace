@@ -83,6 +83,7 @@ type RecipeWithRelations = {
     ratingCount: number | null;
     cookCount: number | null;
     imageKey: string | null;
+    imagePlaceholder?: string | null;
     publishedAt: Date | null;
     updatedAt: Date;
     flowNodes: unknown;
@@ -122,6 +123,7 @@ type RecipeDocument = {
     cookCount: number;
     stepCount: number;
     imageKey?: string;
+    imagePlaceholder?: string;
     publishedAt?: string;
     status: string;
     keywords: string[];
@@ -243,6 +245,7 @@ export function transformToDocument(recipe: RecipeWithRelations): RecipeDocument
         cookCount: recipe.cookCount ?? 0,
         stepCount: Array.isArray(recipe.flowNodes) ? recipe.flowNodes.length : 0,
         imageKey: recipe.imageKey ?? undefined,
+        imagePlaceholder: recipe.imagePlaceholder ?? undefined,
         publishedAt: recipe.publishedAt?.toISOString(),
         status: recipe.status,
         keywords,
@@ -424,6 +427,7 @@ export async function processSyncRecipes(job: Job<SyncRecipesJob>): Promise<{ sy
                     cookCount: true,
                     flowNodes: true,
                     imageKey: true,
+                    imagePlaceholder: true,
                     publishedAt: true,
                     updatedAt: true,
                     categories: { include: { category: true } },
@@ -624,6 +628,7 @@ export async function processSyncRecipeToOpenSearch(
                 cookCount: true,
                 flowNodes: true,
                 imageKey: true,
+                imagePlaceholder: true,
                 publishedAt: true,
                 updatedAt: true,
                 categories: { include: { category: true } },

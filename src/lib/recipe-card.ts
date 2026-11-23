@@ -13,6 +13,8 @@ export interface RecipeCardData {
     time: string;
     image: string | null;
     imageKey?: string | null;
+    /** Blurred preview data URL, shown until the image loads (KUC-146) */
+    imagePlaceholder?: string | null;
     description?: string;
     stepCount?: number;
     difficulty?: string;
@@ -49,6 +51,7 @@ export function toRecipeCardData(recipe: RecipeWithCategory): RecipeCardData {
             ? `/api/thumbnail?type=recipe&id=${encodeURIComponent(recipe.id)}`
             : null,
         imageKey: recipe.imageKey ?? null,
+        imagePlaceholder: recipe.imagePlaceholder ?? null,
         description: recipe.description ?? '',
         difficulty:
             recipe.difficulty === 'EASY'

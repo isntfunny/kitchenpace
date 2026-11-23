@@ -264,6 +264,7 @@ export function RecipeCard({
                         alt={recipe.title}
                         fill
                         recipeId={recipe.id}
+                        placeholder={recipe.imagePlaceholder}
                         sizes="120px"
                         className={css({ objectFit: 'cover' })}
                     />
@@ -434,6 +435,7 @@ export function RecipeCard({
                     alt={recipe.title}
                     fill
                     recipeId={recipe.id}
+                    placeholder={recipe.imagePlaceholder}
                     sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
                     className={css({ objectFit: 'cover' })}
                 />

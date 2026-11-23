@@ -138,6 +138,7 @@ export function ChefSpotlight({ chef }: ChefSpotlightProps) {
                         >
                             <SmartImage
                                 imageKey={recipe.imageKey}
+                                placeholder={recipe.imagePlaceholder}
                                 recipeId={recipe.id}
                                 alt={recipe.title}
                                 aspect="1:1"

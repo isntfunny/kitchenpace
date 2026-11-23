@@ -23,6 +23,7 @@ import {
     processBackupDatabase,
     processCachePurge,
     processGenerateRecipeOg,
+    processBackfillRecipeImagePlaceholders,
     processGenerateOgImages,
     processBackfillIngredientPlurals,
     processRecalculateStats,
@@ -46,7 +47,6 @@ import {
 //
 // Derived from it: worker dispatch (worker.ts), scheduler cron (scheduler.ts), admin UI.
 
- 
 type Processor = (job: Job<any>) => Promise<unknown>;
 
 export interface JobDefinition extends JobMeta {
@@ -68,6 +68,7 @@ const PROCESSORS: Record<JobName, Processor> = {
     'backup-database-daily': (job: Job) => processBackupDatabase(job, 'daily'),
     'generate-og-images': processGenerateOgImages,
     'generate-recipe-og': processGenerateRecipeOg,
+    'backfill-recipe-image-placeholders': processBackfillRecipeImagePlaceholders,
     'purge-thumbnail-cache': processCachePurge,
     'backfill-ingredient-plurals': processBackfillIngredientPlurals,
     'enrich-ingredient-nutrition': processEnrichIngredientNutrition,

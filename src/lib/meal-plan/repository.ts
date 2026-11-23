@@ -34,7 +34,7 @@ export const recipeSummary = {
         title: true,
         slug: true,
         imageKey: true,
-        blurhash: true,
+        imagePlaceholder: true,
         servings: true,
         totalTime: true,
         prepTime: true,

@@ -66,6 +66,8 @@ export interface Recipe {
     description: string;
     image: string;
     imageKey?: string | null;
+    /** Blurred preview data URL, shown until the image loads (KUC-146) */
+    imagePlaceholder?: string | null;
     category: string;
     categorySlug?: string;
     categoryColor?: string;

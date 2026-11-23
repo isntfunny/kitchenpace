@@ -62,6 +62,7 @@ export interface ChefSpotlightData extends UserCardData {
         slug: string;
         title: string;
         imageKey: string | null;
+        imagePlaceholder: string | null;
     }>;
 }
 
@@ -210,6 +211,7 @@ export async function fetchChefSpotlight(): Promise<ChefSpotlightData | null> {
                     slug: recipe.slug,
                     title: recipe.title,
                     imageKey: recipe.imageKey ?? null,
+                    imagePlaceholder: recipe.imagePlaceholder ?? null,
                 })),
             };
         }
@@ -251,6 +253,7 @@ export async function fetchChefSpotlight(): Promise<ChefSpotlightData | null> {
             slug: recipe.slug,
             title: recipe.title,
             imageKey: recipe.imageKey ?? null,
+            imagePlaceholder: recipe.imagePlaceholder ?? null,
         })),
     };
 }

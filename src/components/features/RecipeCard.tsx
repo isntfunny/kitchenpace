@@ -219,7 +219,10 @@ export function RecipeCard({
             </>
         ) : null
     ) : (
-        footer
+        (footer ??
+        (recipe.reason ? (
+            <p className={css({ fontSize: 'xs', color: 'text.muted', px: '1' })}>{recipe.reason}</p>
+        ) : null))
     );
     const isCompact = variant === 'compact';
     const isList = variant === 'list';

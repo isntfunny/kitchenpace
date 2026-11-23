@@ -48,6 +48,7 @@ export const RecipeSearchClient: FC<RecipeSearchClientProps> = ({
         isLoggedIn,
         sortStorageKey: STORAGE_KEYS.searchSort,
         sortLocked,
+        hasPantry: personal?.hasPantry ?? false,
     });
     useFilterUrlSync(state, { pathname: usePathname(), initialFilters });
     const results = useRecipeSearch(state.filters, { initialData });

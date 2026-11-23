@@ -134,3 +134,9 @@ test('no semantic hits under a personal filter', () => {
     const base = { query: 'schnelles abendessen mit hähnchen', userId: 'u1', page: 1 };
     assert.equal(semanticPrependAllowed({ ...base, personal: true }), false);
 });
+
+test('sort "leftovers" survives the URL round trip', () => {
+    const filters = parseRecipeFilterParams(new URLSearchParams('sort=leftovers'));
+    assert.equal(filters.sort, 'leftovers');
+    assert.equal(buildRecipeFilterQuery(filters).get('sort'), 'leftovers');
+});

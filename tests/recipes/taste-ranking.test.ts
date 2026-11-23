@@ -79,3 +79,15 @@ test('paginate slices a ranked pool by 1-based page', () => {
     assert.deepEqual(paginate(pool, 4, 30), []);
     assert.deepEqual(paginate(pool, 0, 30), pool.slice(0, 30));
 });
+
+test('leftover sort needs a logged-in user with a pantry (KUC-132)', () => {
+    assert.equal(resolveEffectiveSort('leftovers', { isLoggedIn: false }), 'popular');
+    assert.equal(
+        resolveEffectiveSort('leftovers', { isLoggedIn: true, hasPantry: false }),
+        'rating',
+    );
+    assert.equal(
+        resolveEffectiveSort('leftovers', { isLoggedIn: true, hasPantry: true }),
+        'leftovers',
+    );
+});

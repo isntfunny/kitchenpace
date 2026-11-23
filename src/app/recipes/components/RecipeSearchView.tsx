@@ -23,7 +23,7 @@ import { FilterSidebar, type FilterSectionId } from './FilterSidebar';
 import { useContainerColumns } from './grid-columns';
 import { MobileFilterSheet } from './MobileFilterSheet';
 import { SearchEmptyState } from './SearchEmptyState';
-import { SearchHeader, type SortChoice } from './SearchHeader';
+import { SearchHeader, searchSortOptions, type SortChoice } from './SearchHeader';
 import type { RecipeFilterState } from './useRecipeFilterState';
 import type { RecipeSearchState } from './useRecipeSearch';
 import { useStableFacets } from './useStableFacets';
@@ -193,7 +193,7 @@ export function RecipeSearchView({
                     isLoggedIn={isLoggedIn}
                     title={title}
                     titleAs={titleAs}
-                    sortOptions={sortOptions}
+                    sortOptions={sortOptions ?? searchSortOptions(isLoggedIn, personal.hasPantry)}
                     headerExtra={headerExtra}
                 />
 

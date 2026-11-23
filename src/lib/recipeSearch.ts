@@ -1,5 +1,9 @@
 import type { RecipeCardData } from '@app/app/actions/recipes';
-import { loadWeekPlanSearchData } from '@app/lib/recipes/personal-search.server';
+import {
+    loadPantrySearchData,
+    loadWeekPlanSearchData,
+    type PantrySearchData,
+} from '@app/lib/recipes/personal-search.server';
 import { rankedSearch } from '@app/lib/recipes/ranked-search';
 import {
     knnRecipeIds,
@@ -19,6 +23,7 @@ import type { RecipeSearchFacets, RecipeSearchMeta, TermFacet } from '@app/lib/r
 import { semanticRecipeSearch } from '@app/lib/search/semanticSearch';
 import { toBerlinDate } from '@shared/dates';
 import { createLogger } from '@shared/logger';
+import { rankByLeftovers } from '@shared/meal-planning/leftover-score';
 import { seasonOf } from '@shared/meal-planning/season';
 import { opensearchClient, OPENSEARCH_INDEX } from '@shared/opensearch/client';
 import type { RecipeFilterSearchParams } from '@shared/recipe-filters';
@@ -96,6 +101,29 @@ export async function searchRecipeIds(
 
 /** Ids fetched for the ranked sorts (taste, week): kNN and scoring pick from these. */
 const RANKED_POOL_SIZE = 1000;
+/** Candidates of "Verbraucht meine Reste": best rated recipes using a pantry ingredient */
+export const LEFTOVER_CANDIDATE_POOL = 300;
+
+/** Recipes that contain at least one of the pantry ingredients, on top of `query`. */
+export function withPantryIngredients(
+    query: Record<string, unknown>,
+    indexNames: string[],
+): Record<string, unknown> {
+    return { bool: { filter: [query, { terms: { ingredients: indexNames } }] } };
+}
+
+/** "Verbraucht meine Reste" (KUC-132): candidates re-ranked by how much pantry they use up. */
+async function rankLeftoverIds(
+    ids: string[],
+    pantry: PantrySearchData,
+): Promise<{ id: string; reason?: string }[]> {
+    const recipes = await loadRankingRecipes(ids, undefined, { amounts: true });
+    return rankByLeftovers(
+        ids.flatMap((id) => recipes.get(id) ?? []),
+        pantry.stock,
+        { household: pantry.household, today: toBerlinDate(new Date()) },
+    ).map(({ id, reason }) => ({ id, reason }));
+}
 
 /** Ranked order for "Passt zu dir" / "Passt zu deiner Woche" (KUC-126). */
 async function rankIds(
@@ -180,11 +208,25 @@ export async function queryRecipes(
             });
         }
     }
+    // "Verbraucht meine Reste" reads the pantry on the server; without one it sorts by rating
+    let pantry: PantrySearchData | undefined;
+    if (sort === 'leftovers' && userId) {
+        try {
+            pantry = await loadPantrySearchData(userId);
+        } catch (err) {
+            log.warn('Loading the pantry for the search failed', {
+                error: err instanceof Error ? err.message : String(err),
+            });
+        }
+    }
     const effectiveSort = resolveEffectiveSort(sort, {
         isLoggedIn: !!userId,
         hasTasteProfile: sort === 'taste' ? !!tasteEmbedding : undefined,
+        hasPantry: sort === 'leftovers' ? !!pantry?.indexNames.length : undefined,
     });
-    const isRanked = effectiveSort === 'taste' || effectiveSort === 'week';
+    const isLeftovers = effectiveSort === 'leftovers' && !!pantry;
+    const isRanked = effectiveSort === 'taste' || effectiveSort === 'week' || isLeftovers;
+    const poolSize = isLeftovers ? LEFTOVER_CANDIDATE_POOL : RANKED_POOL_SIZE;
 
     // Week plan quick filter (KUC-131): the plan is read on the server, never from the client
     let weekPlan: WeekPlanSearchData | undefined;
@@ -211,10 +253,15 @@ export async function queryRecipes(
     const response = await opensearchClient.search({
         index: OPENSEARCH_INDEX,
         body: {
-            query: buildRecipeBoolQuery(filters, context, weekPlan),
+            query: isLeftovers
+                ? withPantryIngredients(
+                      buildRecipeBoolQuery(filters, context, weekPlan),
+                      pantry!.indexNames,
+                  )
+                : buildRecipeBoolQuery(filters, context, weekPlan),
             sort: osSort,
             from: isRanked ? 0 : from,
-            size: isRanked ? RANKED_POOL_SIZE : limit,
+            size: isRanked ? poolSize : limit,
             ...(isRanked ? { _source: ['id'] } : {}),
             track_total_hits: true,
             aggs: {
@@ -296,18 +343,25 @@ export async function queryRecipes(
         const idsByRating = hits.flatMap((hit) =>
             typeof hit._source?.id === 'string' ? [hit._source.id as string] : [],
         );
-        const order = await rankIds(idsByRating, {
-            userId: userId!,
-            profile: tasteEmbedding,
-            context: effectiveSort === 'week' ? context : undefined,
-            withReasons: effectiveSort === 'week',
-        });
+        const order = isLeftovers
+            ? await rankLeftoverIds(idsByRating, pantry!).catch((err) => {
+                  log.warn('Leftover ranking failed, keeping rating order', {
+                      error: err instanceof Error ? err.message : String(err),
+                  });
+                  return idsByRating.map((id) => ({ id }));
+              })
+            : await rankIds(idsByRating, {
+                  userId: userId!,
+                  profile: tasteEmbedding,
+                  context: effectiveSort === 'week' ? context : undefined,
+                  withReasons: effectiveSort === 'week',
+              });
         rankedTotal = order.length;
         data = await loadCards(order.slice(from, from + limit));
     }
 
     // Semantic search: prepend embedding-based hits on first page for 4+ word queries
-    const personal = !!filters.weekPlan;
+    const personal = !!filters.weekPlan || isLeftovers;
     if (query && userId && semanticPrependAllowed({ query, userId, page, context, personal })) {
         try {
             const existingIds = new Set(data.map((r) => r.id));

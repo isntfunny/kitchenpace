@@ -40,9 +40,9 @@ type WeekSelectionDialogProps = {
     onApplied: (result: WeekSelectionApplied) => void;
 };
 
-const SORT_OPTIONS: SortChoice[] = [
+const sortOptions = (hasPantry: boolean): SortChoice[] => [
     { value: 'week', label: 'Passt zu deiner Woche' },
-    ...searchSortOptions(true),
+    ...searchSortOptions(true, hasPantry),
 ];
 
 /**
@@ -161,6 +161,7 @@ function WeekSelectionBody({ data, onClose, onApplied }: BodyProps & { data: Wee
         filterSets: data.startData.filterSets,
         isLoggedIn: true,
         defaultSort: 'week',
+        hasPantry: data.personal.hasPantry,
     });
     usePersistedFilters(filterState.filters);
 
@@ -271,7 +272,7 @@ function WeekSelectionBody({ data, onClose, onApplied }: BodyProps & { data: Wee
                         personal={data.personal}
                         title={tabLabel}
                         titleAs="h2"
-                        sortOptions={SORT_OPTIONS}
+                        sortOptions={sortOptions(data.personal.hasPantry)}
                         hiddenSections={['categories']}
                         scrollElement={scrollRef}
                         sidebarTop="0px"

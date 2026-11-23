@@ -9,6 +9,7 @@ import { RecipeCardSkeleton } from '@app/components/features/RecipeCardSkeleton'
 import { useLocalStorage } from '@app/hooks/useLocalStorage';
 import type { FilterSetWithRelations } from '@app/lib/fits-now/db-queries';
 import type { Season } from '@app/lib/fits-now/labels';
+import { NO_PERSONAL_SEARCH, type PersonalSearchFlags } from '@app/lib/recipeSearchTypes';
 import { STORAGE_KEYS } from '@app/lib/storageKeys';
 import type { ThemeChip } from '@shared/theme-clusters/release';
 
@@ -22,7 +23,7 @@ import { FilterSidebar, type FilterSectionId } from './FilterSidebar';
 import { useContainerColumns } from './grid-columns';
 import { MobileFilterSheet } from './MobileFilterSheet';
 import { SearchEmptyState } from './SearchEmptyState';
-import { SearchHeader, type SortChoice } from './SearchHeader';
+import { SearchHeader, searchSortOptions, type SortChoice } from './SearchHeader';
 import type { RecipeFilterState } from './useRecipeFilterState';
 import type { RecipeSearchState } from './useRecipeSearch';
 import { useStableFacets } from './useStableFacets';
@@ -42,6 +43,8 @@ export type RecipeSearchViewProps = {
     themes?: ThemeChip[];
     currentSeason?: Season;
     isLoggedIn: boolean;
+    /** Personal quick filters and sorts the user may see (week plan, pantry) */
+    personal?: PersonalSearchFlags;
     title?: string;
     titleAs?: 'h1' | 'h2';
     sortOptions?: SortChoice[];
@@ -80,6 +83,7 @@ export function RecipeSearchView({
     themes,
     currentSeason,
     isLoggedIn,
+    personal = NO_PERSONAL_SEARCH,
     title,
     titleAs,
     sortOptions,
@@ -189,7 +193,7 @@ export function RecipeSearchView({
                     isLoggedIn={isLoggedIn}
                     title={title}
                     titleAs={titleAs}
-                    sortOptions={sortOptions}
+                    sortOptions={sortOptions ?? searchSortOptions(isLoggedIn, personal.hasPantry)}
                     headerExtra={headerExtra}
                 />
 
@@ -201,6 +205,17 @@ export function RecipeSearchView({
                     themes={themes}
                     filters={filters}
                     onThemeToggle={handleThemeToggle}
+                    weekPlan={
+                        isLoggedIn && personal.hasPlan
+                            ? {
+                                  active: filters.weekPlan,
+                                  onToggle: (mode) =>
+                                      updateFilters({
+                                          weekPlan: filters.weekPlan === mode ? undefined : mode,
+                                      }),
+                              }
+                            : undefined
+                    }
                 />
 
                 {leading.length > 0 && <div className={rowClass}>{leading.map(card)}</div>}

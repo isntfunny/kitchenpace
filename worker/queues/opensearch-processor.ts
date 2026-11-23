@@ -6,7 +6,13 @@ import {
     generateEmbedding,
     type RecipeEmbeddingInput,
 } from '@app/lib/embeddings/embedding-service';
+import {
+    MAIN_INGREDIENT_LINE_SELECT,
+    toMainIngredientLines,
+    type MainIngredientLineRow,
+} from '@app/lib/recipes/main-ingredient-lines';
 import { isAiAutomationEnabled } from '@shared/ai-automation';
+import { deriveMainIngredients } from '@shared/meal-planning/main-ingredients';
 import { createOpenAIBatchApi } from '@shared/openai-batch';
 import {
     ensureIndices,
@@ -47,6 +53,21 @@ const BULK_DOCS_PER_CHUNK = 1000;
 
 type BulkOperation = Record<string, unknown>;
 
+let indicesReady: Promise<void> | null = null;
+
+/**
+ * Adds missing mapping fields once per worker process, before the first recipe write.
+ * A new field (e.g. `mainIngredients`, KUC-131) must never be created by dynamic mapping as
+ * `text`: keyword filters would not match and putMapping cannot change it afterwards.
+ */
+function ensureIndicesOnce(): Promise<void> {
+    indicesReady ??= ensureIndices().catch((error) => {
+        indicesReady = null;
+        throw error;
+    });
+    return indicesReady;
+}
+
 type RecipeWithRelations = {
     id: string;
     slug: string;
@@ -66,7 +87,15 @@ type RecipeWithRelations = {
     updatedAt: Date;
     flowNodes: unknown;
     tags: Array<{ tag: { name: string } | null }>;
-    recipeIngredients: Array<{ ingredient: { name: string } | null }>;
+    /** Amount, unit and categories are optional: without them no main ingredient is derived */
+    recipeIngredients: Array<
+        Partial<Omit<MainIngredientLineRow, 'ingredient'>> & {
+            ingredient:
+                | (Pick<NonNullable<MainIngredientLineRow['ingredient']>, 'name'> &
+                      Partial<NonNullable<MainIngredientLineRow['ingredient']>>)
+                | null;
+        }
+    >;
     categories: Array<{ category: { name: string; slug: string } | null }>;
 };
 
@@ -81,6 +110,8 @@ type RecipeDocument = {
     categorySlugs: string[];
     tags: string[];
     ingredients: string[];
+    /** Derived main ingredients (KUC-131): meat, fish, legumes, largest vegetable or side */
+    mainIngredients: string[];
     difficulty: string;
     totalTime: number;
     prepTime: number;
@@ -188,6 +219,20 @@ export function transformToDocument(recipe: RecipeWithRelations): RecipeDocument
         categorySlugs: normalizeStringArray(recipe.categories.map((entry) => entry.category?.slug)),
         tags,
         ingredients,
+        mainIngredients: deriveMainIngredients(
+            toMainIngredientLines(
+                recipe.recipeIngredients.map((line) => ({
+                    isOptional: line.isOptional ?? false,
+                    amount: line.amount ?? '',
+                    unit: line.unit ?? null,
+                    ingredient: line.ingredient && {
+                        name: line.ingredient.name,
+                        categories: line.ingredient.categories ?? [],
+                        ingredientUnits: line.ingredient.ingredientUnits ?? [],
+                    },
+                })),
+            ),
+        ),
         difficulty: recipe.difficulty,
         totalTime: recipe.totalTime ?? 0,
         prepTime: recipe.prepTime ?? 0,
@@ -340,6 +385,7 @@ export async function processSyncRecipes(job: Job<SyncRecipesJob>): Promise<{ sy
     console.log(`[OpenSearch] Processing sync-recipes job ${job.id}`, { pageSize });
 
     try {
+        await ensureIndicesOnce();
         const redis = getRedis();
         const watermarkRaw = await redis.get(WATERMARK_KEY_RECIPES);
         const watermark = watermarkRaw ? new Date(watermarkRaw) : undefined;
@@ -382,7 +428,7 @@ export async function processSyncRecipes(job: Job<SyncRecipesJob>): Promise<{ sy
                     updatedAt: true,
                     categories: { include: { category: true } },
                     tags: { include: { tag: true } },
-                    recipeIngredients: { include: { ingredient: true } },
+                    recipeIngredients: { select: MAIN_INGREDIENT_LINE_SELECT },
                 },
                 orderBy: { id: 'asc' },
                 take: pageSize,
@@ -582,7 +628,7 @@ export async function processSyncRecipeToOpenSearch(
                 updatedAt: true,
                 categories: { include: { category: true } },
                 tags: { include: { tag: true } },
-                recipeIngredients: { include: { ingredient: true } },
+                recipeIngredients: { select: MAIN_INGREDIENT_LINE_SELECT },
             },
         });
 
@@ -605,6 +651,7 @@ export async function processSyncRecipeToOpenSearch(
         }
 
         const doc = transformToDocument(recipe);
+        await ensureIndicesOnce();
 
         await opensearchClient.index({
             index: OPENSEARCH_INDEX,

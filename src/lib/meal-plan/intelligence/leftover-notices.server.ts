@@ -1,19 +1,28 @@
 // Leftover hints of the plan page (KUC-108): soon-expiring pantry leftovers, each with up
-// to three recipes from the best rated ones that use it. Server only.
+// to three recipes that use it. Candidates and order are the same as in the search sort
+// "Verbraucht meine Reste" (KUC-132). Server only.
 import 'server-only';
 
 import type { Db } from '@app/lib/meal-plan/db';
 import { getLeftoverHints } from '@app/lib/pantry/leftovers';
 import { loadRankingRecipes } from '@app/lib/recipes/ranking-features.server';
 import { loadTasteEmbedding } from '@app/lib/recipes/taste-ranking.server';
+import {
+    LEFTOVER_CANDIDATE_POOL,
+    searchRecipeIds,
+    withPantryIngredients,
+} from '@app/lib/recipeSearch';
 import { weekdayLong } from '@shared/dates';
+import { createLogger } from '@shared/logger';
 import { suggestLeftoverRecipes, type LeftoverHint } from '@shared/meal-planning/leftovers';
 import type { IsoDate } from '@shared/meal-planning/types';
 import { normalize } from '@shared/recipe-ranking/vector';
 
 // ── Leftovers (KUC-108) ─────────────────────────────────────────────────────
 
-/** Pool size: the best rated published recipes are checked against the leftovers. */
+const log = createLogger('leftover-notices');
+
+/** Fallback pool when the search is unavailable: the best rated published recipes. */
 export const LEFTOVER_POOL = 250;
 
 export interface RecipeCard {
@@ -33,17 +42,40 @@ export interface LeftoverNoticeDTO {
     recipes: (RecipeCard & { reasons: string[] })[];
 }
 
-/** Best rated published recipes with a cooking time, as cards. */
-async function loadLeftoverPool(db: Db): Promise<Map<string, RecipeCard>> {
+/**
+ * Candidates as cards: the best rated published recipes that contain one of the leftover
+ * ingredients (same search as the sort "Verbraucht meine Reste"). If the search fails, the
+ * best rated recipes overall.
+ */
+async function loadLeftoverPool(db: Db, ingredientIds: string[]): Promise<Map<string, RecipeCard>> {
+    let ids: string[] | null = null;
+    try {
+        const names = await db.ingredient.findMany({
+            where: { id: { in: ingredientIds } },
+            select: { name: true },
+        });
+        ids = await searchRecipeIds(
+            withPantryIngredients(
+                { term: { status: 'PUBLISHED' } },
+                names.map((n) => n.name),
+            ),
+            LEFTOVER_CANDIDATE_POOL,
+        );
+    } catch (err) {
+        log.warn('Leftover candidate search failed, using the best rated recipes', {
+            error: err instanceof Error ? err.message : String(err),
+        });
+    }
     const top = await db.recipe.findMany({
         where: {
+            ...(ids ? { id: { in: ids } } : {}),
             status: 'PUBLISHED',
             moderationStatus: { not: 'REJECTED' },
             totalTime: { gt: 0 },
         },
         select: { id: true, slug: true, title: true, imageKey: true, totalTime: true },
         orderBy: [{ rating: 'desc' }, { ratingCount: 'desc' }],
-        take: LEFTOVER_POOL,
+        take: ids ? undefined : LEFTOVER_POOL,
     });
     return new Map(top.map((r) => [r.id, r]));
 }
@@ -60,7 +92,9 @@ export async function getLeftoverNotices(
 ): Promise<LeftoverNoticeDTO[]> {
     const leftovers = await getLeftoverHints(db, userId, ctx.today);
     if (leftovers.length === 0) return [];
-    const cards = await loadLeftoverPool(db);
+    const cards = await loadLeftoverPool(db, [
+        ...new Set(leftovers.map((leftover) => leftover.ingredientId)),
+    ]);
     if (cards.size === 0) return [];
     const [recipes, taste] = await Promise.all([
         loadRankingRecipes([...cards.keys()], db, { amounts: true }),

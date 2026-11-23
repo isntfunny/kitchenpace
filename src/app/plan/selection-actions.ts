@@ -14,10 +14,12 @@ import {
 } from '@app/lib/meal-plan/selection';
 import { loadPickInfo } from '@app/lib/meal-plan/selection-loader.server';
 import { MEAL_TYPE_LABELS, isFixedSlot } from '@app/lib/meal-plan/slots';
+import { loadPersonalSearchFlags } from '@app/lib/recipes/personal-search.server';
 import { loadGlobalMeanRating, loadRankingRecipes } from '@app/lib/recipes/ranking-features.server';
 import { loadTasteEmbedding } from '@app/lib/recipes/taste-ranking.server';
 import { loadCards, searchRecipeIds } from '@app/lib/recipeSearch';
 import { buildRecipeBoolQuery } from '@app/lib/recipeSearchQuery';
+import type { PersonalSearchFlags } from '@app/lib/recipeSearchTypes';
 import { idSchema } from '@app/lib/schemas';
 import { pickSide } from '@shared/meal-planning/side-dish';
 import { prisma } from '@shared/prisma';
@@ -38,6 +40,8 @@ export type WeekSelectionOpen = {
     /** "date|slotKey" cells that already hold an entry */
     occupied: string[];
     startData: SearchStartData;
+    /** Personal quick filters and sorts for this week (week plan, pantry) */
+    personal: PersonalSearchFlags;
 };
 
 /** Candidates fetched for "Probier auch mal" and "Dazu passt" */
@@ -54,9 +58,10 @@ export async function openWeekSelection(
 ): Promise<PlanActionResult<WeekSelectionOpen>> {
     return run(async (userId) => {
         const { startDate } = z.object({ startDate: isoDateSchema }).strict().parse(input);
-        const [week, startData] = await Promise.all([
+        const [week, startData, personal] = await Promise.all([
             loadWeekSelection(prisma, userId, startDate),
             loadSearchStartData(),
+            loadPersonalSearchFlags(userId, startDate),
         ]);
         return {
             startDate: week.startDate,
@@ -70,6 +75,7 @@ export async function openWeekSelection(
             })),
             occupied: week.occupied,
             startData,
+            personal,
         };
     });
 }

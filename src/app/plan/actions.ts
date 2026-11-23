@@ -15,6 +15,7 @@ import { isoDateSchema } from '@app/lib/meal-plan/schemas';
 import { weekRange, weekStartFor } from '@app/lib/meal-plan/week';
 import { idSchema } from '@app/lib/schemas';
 import { todayIn } from '@shared/dates';
+import { monthGridRange, type CalendarEntry } from '@shared/meal-planning/calendar-days';
 import { prisma } from '@shared/prisma';
 
 import { run, runWrite } from './run';
@@ -93,6 +94,34 @@ export async function getPlanContext(input: unknown) {
                     date: entry.date.toISOString().slice(0, 10),
                     slot: entry.slot,
                 })),
+        };
+    });
+}
+
+const monthSchema = z
+    .string()
+    .regex(/^\d{4}-(0[1-9]|1[0-2])$/)
+    .refine((month) => month >= '2000-01' && month <= '2100-12');
+
+/**
+ * Plan entries of the weeks that make up one calendar month, for the day markers of
+ * "Hinzufügen zu …" (KUC-130). Only what the markers need, no recipe data.
+ */
+export async function getPlanMonth(input: unknown) {
+    return run(async (userId): Promise<{ entries: CalendarEntry[] }> => {
+        const { month } = z.object({ month: monthSchema }).strict().parse(input);
+        const settings = await getMealPlanSettings(prisma, userId);
+        const entries = await listMealPlanEntries(
+            prisma,
+            userId,
+            monthGridRange(month, settings.weekStartDay),
+        );
+        return {
+            entries: entries.map((entry) => ({
+                date: entry.date.toISOString().slice(0, 10),
+                slot: entry.slot,
+                recipeId: entry.recipeId,
+            })),
         };
     });
 }

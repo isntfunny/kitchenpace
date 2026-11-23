@@ -25,6 +25,8 @@ export type FilterStateOptions = {
     sortStorageKey?: string;
     /** true when the URL sets ?sort=: the remembered sort must not override it */
     sortLocked?: boolean;
+    /** Without a pantry "Verbraucht meine Reste" falls back to the rating (KUC-132) */
+    hasPantry?: boolean;
 };
 
 const UNUSED_SORT_KEY = 'kitchenpace-unused-sort';
@@ -40,6 +42,7 @@ export function useRecipeFilterState({
     defaultSort = 'rating',
     sortStorageKey,
     sortLocked = false,
+    hasPantry = false,
 }: FilterStateOptions) {
     // Hooks must not be conditional: without a key, a dummy entry is read and never written
     const [savedSort, setSavedSort] = useLocalStorage<RecipeSortOption>(
@@ -50,8 +53,8 @@ export function useRecipeFilterState({
     // "Passt zu dir" is for logged-in users only: guests fall back to popular (no error)
     const resolveSort = useCallback(
         (sort: RecipeSortOption | undefined) =>
-            resolveEffectiveSort(sort ?? defaultSort, { isLoggedIn }),
-        [defaultSort, isLoggedIn],
+            resolveEffectiveSort(sort ?? defaultSort, { isLoggedIn, hasPantry }),
+        [defaultSort, isLoggedIn, hasPantry],
     );
 
     const [filters, setFilters] = useState<FiltersWithSort>(() => ({

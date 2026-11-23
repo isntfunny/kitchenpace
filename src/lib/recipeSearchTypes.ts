@@ -35,3 +35,13 @@ export type RecipeSearchMeta = {
     limit: number;
     facets?: RecipeSearchFacets;
 };
+
+/** Which personal quick filters and sorts the search may offer this user (KUC-131/132). */
+export type PersonalSearchFlags = {
+    /** Recipes are planned in the week: the week plan quick filters are shown */
+    hasPlan: boolean;
+    /** Pantry has usable items: the sort "Verbraucht meine Reste" is shown */
+    hasPantry: boolean;
+};
+
+export const NO_PERSONAL_SEARCH: PersonalSearchFlags = { hasPlan: false, hasPantry: false };

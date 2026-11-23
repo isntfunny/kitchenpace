@@ -3,12 +3,13 @@ import { test } from 'node:test';
 
 import { mealKindQuery } from '../../shared/meal-planning/meal-kind';
 import { buildRecipeTextQuery } from '../../shared/opensearch/client';
-import { buildRecipeFilterQuery } from '../../shared/recipe-filters';
+import { buildRecipeFilterQuery, parseRecipeFilterParams } from '../../shared/recipe-filters';
 import {
     appendRecipeSearchContext,
     buildRecipeBoolQuery,
     parseRecipeSearchContext,
     semanticPrependAllowed,
+    weekPlanClauses,
 } from '../../src/lib/recipeSearchQuery';
 
 const roundTrip = (ctx: Parameters<typeof appendRecipeSearchContext>[1]) => {
@@ -92,4 +93,50 @@ test('semantic hits are never prepended under a base filter (week selection)', (
     assert.equal(semanticPrependAllowed({ ...base, query: 'hähnchen curry' }), false);
     assert.equal(semanticPrependAllowed({ ...base, page: 2 }), false);
     assert.equal(semanticPrependAllowed({ ...base, userId: undefined }), false);
+});
+
+test('week plan quick filter: parsed from the URL, data only from the server (KUC-131)', () => {
+    const filters = parseRecipeFilterParams(new URLSearchParams('weekPlan=with&tags=Vegan'));
+    assert.equal(filters.weekPlan, 'with');
+    assert.equal(buildRecipeFilterQuery(filters).get('weekPlan'), 'with');
+    assert.equal(parseRecipeFilterParams(new URLSearchParams('weekPlan=Hack')).weekPlan, undefined);
+
+    const week = { mainIngredients: ['Hackfleisch', 'Spaghetti'], recipeIds: ['r1'] };
+    const withWeek = buildRecipeBoolQuery(
+        { weekPlan: 'with', filterMode: 'or' },
+        undefined,
+        week,
+    ) as {
+        bool: Record<string, unknown[]>;
+    };
+    assert.deepEqual(withWeek.bool.filter, [
+        { term: { status: 'PUBLISHED' } },
+        { terms: { ingredients: ['Hackfleisch', 'Spaghetti'] } },
+    ]);
+    assert.deepEqual(withWeek.bool.must_not, [{ terms: { id: ['r1'] } }]);
+
+    const without = buildRecipeBoolQuery({ weekPlan: 'without' }, undefined, week) as {
+        bool: Record<string, unknown[]>;
+    };
+    assert.deepEqual(without.bool.must_not, [
+        { terms: { mainIngredients: ['Hackfleisch', 'Spaghetti'] } },
+    ]);
+
+    // Empty plan or no server data: the filter does nothing
+    assert.deepEqual(weekPlanClauses('with', { mainIngredients: [], recipeIds: [] }), {
+        filter: [],
+        mustNot: [],
+    });
+    assert.deepEqual(weekPlanClauses('without', undefined), { filter: [], mustNot: [] });
+});
+
+test('no semantic hits under a personal filter', () => {
+    const base = { query: 'schnelles abendessen mit hähnchen', userId: 'u1', page: 1 };
+    assert.equal(semanticPrependAllowed({ ...base, personal: true }), false);
+});
+
+test('sort "leftovers" survives the URL round trip', () => {
+    const filters = parseRecipeFilterParams(new URLSearchParams('sort=leftovers'));
+    assert.equal(filters.sort, 'leftovers');
+    assert.equal(buildRecipeFilterQuery(filters).get('sort'), 'leftovers');
 });

@@ -193,7 +193,7 @@ test(
             const nutrition: [string, number][] = [];
             const order: string[] = [];
             let written: Parameters<typeof recipeFingerprint>[0] | undefined;
-            const result = await replaceImportedRecipe(
+            await replaceImportedRecipe(
                 prisma,
                 recipeId,
                 { ...fresh, sourceUrl: `https://x.test/${key}` },
@@ -213,7 +213,6 @@ test(
                     },
                 },
             );
-            assert.equal(result.imageAdded, false, 'an existing image is kept, none fetched');
             assert.deepEqual(nutrition, [[recipeId, 4]]);
             assert.deepEqual(order, ['committed:true', 'nutrition']);
             // the fingerprint taken at commit matches the recipe as read back (jsonb)

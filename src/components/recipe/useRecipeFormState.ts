@@ -14,7 +14,7 @@ import { removeIngredientReferences } from '@app/lib/ingredients/recipe-mentions
 
 import { searchTags } from '../recipe/actions';
 
-import { createIngredient, findOrCreateTag, uploadImageFromUrl } from './ingredientActions';
+import { createIngredient, findOrCreateTag } from './ingredientActions';
 import { AddedIngredient, Category, IngredientSearchResult, Tag } from './RecipeForm/data';
 import type { FlowEdgeInput, FlowNodeInput } from './recipeFormTypes';
 import type { TagFacet } from './types';
@@ -372,19 +372,8 @@ export function useRecipeFormState({
                     });
                 }
             }
-
-            // Upload AI-extracted recipe image to S3 (fire-and-forget)
-            if (result.imageUrl && !imageKey) {
-                uploadImageFromUrl(result.imageUrl)
-                    .then((imgResult) => {
-                        if (imgResult.success) {
-                            setImageKey(imgResult.key);
-                        }
-                    })
-                    .catch((err) => console.error('Failed to upload AI image:', err));
-            }
         },
-        [categories, initialTagCandidates, imageKey],
+        [categories, initialTagCandidates],
     );
 
     return {

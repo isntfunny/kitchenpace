@@ -1,7 +1,6 @@
 'use server';
 
 import { createUserNotification } from '@app/lib/events/persist';
-import { uploadImageFromUrl as uploadImageFromUrlShared } from '@app/lib/importer/upload-image-from-url';
 import { enqueueIngredientEnrichment } from '@app/lib/ingredients/enqueue-enrichment';
 import { matchExistingIngredient } from '@app/lib/ingredients/match-ingredient';
 import { newIngredientNotificationsEnabled } from '@app/lib/ingredients/new-ingredient-notifications';
@@ -176,14 +175,4 @@ export async function findOrCreateTag(
     });
 
     return tag;
-}
-
-/**
- * Downloads an external image URL and uploads it to S3.
- * Server action wrapper so client components can call this.
- */
-export async function uploadImageFromUrl(
-    imageUrl: string,
-): Promise<{ success: true; key: string } | { success: false; error: string }> {
-    return uploadImageFromUrlShared(imageUrl);
 }

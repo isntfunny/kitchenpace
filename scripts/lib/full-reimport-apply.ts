@@ -153,7 +153,7 @@ export async function applyFull(
                 if (result.warnings.length)
                     warnings.push({ id: p.recipeId, warnings: result.warnings });
                 console.log(
-                    `[${index + 1}/${todo.length}] neu importiert: ${p.recipeId} ${p.recipe!.title}${result.imageAdded ? ' (+ Bild)' : ''}`,
+                    `[${index + 1}/${todo.length}] neu importiert: ${p.recipeId} ${p.recipe!.title}`,
                 );
             } catch (error) {
                 failed.push({ id: p.recipeId, error: message(error) });

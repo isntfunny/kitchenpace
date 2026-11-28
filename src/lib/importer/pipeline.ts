@@ -11,8 +11,6 @@ import type { Prisma, PrismaClient } from '@prisma/client';
 import { createIngredient, findOrCreateUnit } from '@app/components/recipe/ingredientActions';
 import { applyFlowPositions } from '@app/lib/flow-layout';
 import { assertResolvedMentions } from '@app/lib/ingredients/recipe-mentions';
-import { approvedKey } from '@app/lib/s3/keys';
-import { moveObject } from '@app/lib/s3/operations';
 import { generateUniqueSlug } from '@app/lib/slug';
 import { AI_TEXT_MODEL } from '@shared/ai-models';
 import { pickListedTags, TAG_NAMES_SORTED } from '@shared/tags/tag-list';
@@ -20,7 +18,6 @@ import { pickListedTags, TAG_NAMES_SORTED } from '@shared/tags/tag-list';
 import { bindImportedFlow } from './import-flow-binding';
 import { describeParseError, importRecipeFromMarkdown } from './openai-client';
 import { type AnalyzedRecipe, transformImportedRecipe } from './transform';
-import { uploadImageFromUrl } from './upload-image-from-url';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // analyzeWithAI
@@ -246,28 +243,6 @@ export async function prepareImportedRecipe(
     };
 }
 
-/** Downloads the external image into uploads/; `undefined` when there is none or it fails. */
-async function uploadImportImage(imageUrl: string | undefined): Promise<string | undefined> {
-    if (!imageUrl) return undefined;
-    const imgResult = await uploadImageFromUrl(imageUrl);
-    if (imgResult.success) return imgResult.key;
-    console.warn('[import] Image upload failed:', imgResult.error);
-    return undefined;
-}
-
-/** Moves an uploaded import image to approved/; returns the new key, or `null` on failure. */
-async function approveImportImage(imageKey: string, recipeId: string): Promise<string | null> {
-    const ext = imageKey.split('.').pop() ?? 'jpg';
-    const destKey = approvedKey('recipe', recipeId, ext);
-    try {
-        await moveObject(imageKey, destKey);
-        return destKey;
-    } catch (err: unknown) {
-        console.warn('[import] Failed to move image to approved/', err);
-        return null;
-    }
-}
-
 /** Category ids for the AI's category slugs, in their order; unknown slugs are dropped. */
 async function resolveCategoryIds(db: Db, categorySlugs: string[]): Promise<string[]> {
     if (!categorySlugs.length) return [];
@@ -352,9 +327,7 @@ export async function saveImportedRecipe(
 ): Promise<{ id: string; slug: string }> {
     const prepared = await prepareImportedRecipe(data);
 
-    // Download and upload external image to S3 (if provided)
-    const imageKey = await uploadImportImage(data.imageUrl);
-
+    // Images of external sources are never taken over (rights): an imported recipe has no image.
     const slug = await generateUniqueSlug(data.title, async (s) => {
         const existing = await db.recipe.findUnique({ where: { slug: s } });
         return !!existing;
@@ -364,7 +337,6 @@ export async function saveImportedRecipe(
         data: {
             ...importedRecipeFields(data),
             slug,
-            imageKey: imageKey ?? null,
             status: options?.publish ? 'PUBLISHED' : 'DRAFT',
             publishedAt: options?.publish ? new Date() : null,
             sourceUrl: data.sourceUrl ?? null,
@@ -374,16 +346,6 @@ export async function saveImportedRecipe(
             recipeIngredients: { create: prepared.ingredientRows },
         },
     });
-
-    // Move image from uploads/ to approved/ — imported recipes skip moderation
-    if (imageKey) {
-        const destKey = await approveImportImage(imageKey, recipe.id);
-        if (destKey)
-            await db.recipe.update({
-                where: { id: recipe.id },
-                data: { imageKey: destKey, moderationStatus: 'AUTO_APPROVED' },
-            });
-    }
 
     await linkCategoryIds(db, recipe.id, await resolveCategoryIds(db, data.categoryIds ?? []));
     await linkTagIds(db, recipe.id, await resolveListedTagIds(db, data.tags ?? []));
@@ -426,15 +388,11 @@ export async function replaceImportedRecipe(
             flowEdges: unknown;
         }) => void | Promise<void>;
     },
-): Promise<{ id: string; imageAdded: boolean; warnings: string[] }> {
-    const current = await db.recipe.findUniqueOrThrow({
-        where: { id: recipeId },
-        select: { id: true, imageKey: true },
-    });
+): Promise<{ id: string; warnings: string[] }> {
+    await db.recipe.findUniqueOrThrow({ where: { id: recipeId }, select: { id: true } });
     const prepared = await prepareImportedRecipe(data, options?.resolveIngredient);
     const categoryIds = await resolveCategoryIds(db, data.categoryIds ?? []);
     const tagIds = await resolveListedTagIds(db, data.tags ?? []);
-    const uploaded = current.imageKey ? undefined : await uploadImportImage(data.imageUrl);
 
     const fields = importedRecipeFields(data);
     await db.$transaction(async (tx) => {
@@ -460,22 +418,6 @@ export async function replaceImportedRecipe(
     // The recipe is written at this point; later problems are reported, not thrown
     const warnings: string[] = [];
     const reason = (error: unknown) => (error instanceof Error ? error.message : String(error));
-    let imageAdded = false;
-    if (uploaded) {
-        try {
-            const imageKey = await approveImportImage(uploaded, recipeId);
-            if (imageKey) {
-                // Only if nobody set an image in the meantime
-                const set = await db.recipe.updateMany({
-                    where: { id: recipeId, imageKey: null },
-                    data: { imageKey },
-                });
-                imageAdded = set.count > 0;
-            } else warnings.push('Bild aus der Quelle nicht übernommen');
-        } catch (error) {
-            warnings.push(`Bild aus der Quelle nicht übernommen: ${reason(error)}`);
-        }
-    }
 
     const updateNutrition =
         options?.updateNutrition ??
@@ -490,5 +432,5 @@ export async function replaceImportedRecipe(
         warnings.push(`Nährwerte nicht neu berechnet: ${reason(error)}`);
     }
 
-    return { id: recipeId, imageAdded, warnings };
+    return { id: recipeId, warnings };
 }
